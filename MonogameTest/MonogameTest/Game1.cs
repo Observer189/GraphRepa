@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -16,6 +18,34 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     Texture2D image;
+    SpriteFont font;
+    //Предполагаем, что spritebatch начал рисование
+    public void DrawHistgram(SpriteBatch sb, Rectangle bound, List<(string name, float value)> tables, List<Color>? colors){
+        if (tables.Count == 0) {return;}
+        Color[] data = new Color[10 * 10];
+        Texture2D rectTexture = new Texture2D(GraphicsDevice, 10, 10);
+            for (int i = 0; i < data.Length; ++i)
+                data[i] = Color.White;
+            rectTexture.SetData(data);
+        var max = tables.Select(x => x.value).Max();
+        var diff = max;
+        var offsetLeft = font.MeasureString(max.ToString()).X;
+        var offsetBottom = font.MeasureString(tables.First().name).Y;
+        var graphBounds = new Rectangle(bound.X + (int)offsetLeft, bound.Y, bound.Width - (int)offsetLeft, bound.Height - (int)offsetBottom);
+        var partWidth = graphBounds.Width / tables.Count;
+        for (int i = 0; i < tables.Count; i++)
+        {
+            var table = tables[i];
+            var proportion = (table.value) / diff;
+            var color = colors?[i] ?? Color.Black;
+            var ySize = (int)(graphBounds.Height * proportion);
+            var yMove = graphBounds.Height - ySize;
+            var drawRect = new Rectangle(graphBounds.X + i*partWidth, graphBounds.Y + yMove, partWidth, ySize);
+            sb.Draw(rectTexture, drawRect, color);
+            sb.DrawString(font, table.name, new Vector2(graphBounds.Left + i*partWidth, graphBounds.Bottom), Color.Black);
+        }
+        sb.DrawString(font, max.ToString(), new Vector2(bound.Left, bound.Top), Color.Black);
+    }
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
@@ -25,7 +55,7 @@ public class Game1 : Game
 
     protected override void Initialize()
     {
-        var img = Image.Load<Rgba32>("Гладиатор2.jpg");
+        var img = Image.Load<Rgba32>("XXXL.webp");
         for (int i = 0; i < img.Width; i++)
         {
             for (int j = 0; j < img.Height; j++)
@@ -53,7 +83,7 @@ public class Game1 : Game
             Console.WriteLine(e);
             throw;
         }
-       
+        font = Content.Load<SpriteFont>("defaultfont");
         
         // TODO: use this.Content to load your game content here
     }
@@ -72,7 +102,14 @@ public class Game1 : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
         _spriteBatch.Begin();
-        _spriteBatch.Draw(image,new Rectangle(0,0,100,100),Color.White);
+        var height = GraphicsDevice.PresentationParameters.BackBufferHeight;
+        var width = GraphicsDevice.PresentationParameters.BackBufferWidth;
+        _spriteBatch.Draw(image,new Rectangle(0,0,width/3,height / 3),Color.White);
+
+        DrawHistgram(_spriteBatch, new Rectangle(0,0,width/3,height / 3), new List<(string name, float value)>() {("123", 255), ("451", 126), ("1241", 84)},
+            new List<Color>() {Color.Aqua, Color.Olive, Color.Red}
+        );
+
         _spriteBatch.End();
         // TODO: Add your drawing code here
         base.Draw(gameTime);
