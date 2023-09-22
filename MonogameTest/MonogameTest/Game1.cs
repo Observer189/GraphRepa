@@ -23,6 +23,11 @@ public class Game1 : Game
     Texture2D image2;
     Texture2D image3;
 
+    Dictionary<byte, int> image1_intencity = new ();
+    Dictionary<byte, int> image2_intencity = new ();
+    HistogramRenderer histogramRenderer1;
+    HistogramRenderer histogramRenderer2;
+
     SpriteFont font;
     //Предполагаем, что spritebatch начал рисование
     public void DrawHistgram(SpriteBatch sb, Rectangle bound, List<(string name, float value)> tables, List<Color>? colors){
@@ -111,8 +116,8 @@ public class Game1 : Game
     protected override void Initialize()
     {
 
-        var ig = Image.Load<Rgba32>("Гладиатор2.jpg");
-        var img = Image.Load<Rgba32>("XXXL.webp");
+        //var ig = Image.Load<Rgba32>("Гладиатор2.jpg");
+        var ig = Image.Load<Rgba32>("XXXL.webp");
         /*for (int i = 0; i < img.Width; i++)
         {
             for (int j = 0; j < img.Height; j++)
@@ -122,15 +127,51 @@ public class Game1 : Game
                 img[i, j] = new Rgba32{A = 255, B = (byte)(sum/3), R =  (byte)(sum/3), G = (byte)(sum/3)};
             }
         }*/
-        img.SaveAsPng("ImgProcessed.png");
+        //img.SaveAsPng("ImgProcessed.png");
         var copy = ig.Clone();
         var diff = new Image<Rgba32>(ig.Width,ig.Height);
         ig.ProcessPixelRows(TransformToGrayHDTV);
+        
         ig.SaveAsPng("ImgProcessed0.png");
         copy.ProcessPixelRows(TransformToGrayNTSC);
         copy.SaveAsPng("ImgProcessed2.png");
         diff.ProcessPixelRows(ig,copy,SubtractAbs);
         diff.SaveAsPng("ImgProcessed3.png");
+        for (int i = 0; i < 256; i++)
+        {
+            image1_intencity[(byte)i] = 0;
+            image2_intencity[(byte)i] = 0;
+        }
+        ig.ProcessPixelRows((t) =>
+        {
+            for (int y = 0; y < t.Height; y++)
+            {
+                Span<Rgba32> pixelRow = t.GetRowSpan(y);
+                for (int x = 0; x < pixelRow.Length; x++)
+                {
+                    image1_intencity[pixelRow[x].R]++; 
+                }
+            } 
+        });
+        copy.ProcessPixelRows((t) =>
+        {
+            for (int y = 0; y < t.Height; y++)
+            {
+                Span<Rgba32> pixelRow = t.GetRowSpan(y);
+                for (int x = 0; x < pixelRow.Length; x++)
+                {
+                    image2_intencity[pixelRow[x].R]++;
+                }
+            }
+        });
+        //for (int i = 0; i < 256; i++)
+        //{
+        //    image1_intencity[(byte)i] = (int)double.Log2(image1_intencity[(byte)i]);
+        //    image2_intencity[(byte)i] = (int)double.Log2(image2_intencity[(byte)i]);
+
+        //}
+        histogramRenderer1 = new(GraphicsDevice);
+        histogramRenderer2 = new(GraphicsDevice);
         base.Initialize();
     }
 
@@ -176,17 +217,23 @@ public class Game1 : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
         _spriteBatch.Begin();
-        _spriteBatch.Draw(image1,new Rectangle(0,400,100,100),Color.White);
-        _spriteBatch.Draw(image2,new Rectangle(150,400,100,100),Color.White);
-        _spriteBatch.Draw(image3,new Rectangle(300,400,100,100),Color.White);
-        var height = GraphicsDevice.PresentationParameters.BackBufferHeight;
-        var width = GraphicsDevice.PresentationParameters.BackBufferWidth;
-        _spriteBatch.Draw(image,new Rectangle(0,0,width/3,height / 3),Color.White);
-
-        DrawHistgram(_spriteBatch, new Rectangle(0,0,width/3,height / 3), new List<(string name, float value)>() {("123", 255), ("451", 126), ("1241", 84)},
-            new List<Color>() {Color.Aqua, Color.Olive, Color.Red}
-        );
+        var width = 300;
+        _spriteBatch.Draw(image1,new Rectangle(   0, 0, width, 200),Color.White);
+        _spriteBatch.Draw(image2,new Rectangle( width, 0, width, 200),Color.White);
+        _spriteBatch.Draw(image3,new Rectangle( width * 2, 0, width, 200),Color.White);
         _spriteBatch.End();
+        
+        histogramRenderer1.DrawHistogram(null, image1_intencity, Color.Black, new Rectangle(  0,     200, width, width));
+        histogramRenderer2.DrawHistogram(null, image2_intencity, Color.Black, new Rectangle(  width, 200, width, width));
+
+        //var height = GraphicsDevice.PresentationParameters.BackBufferHeight;
+        //var width = GraphicsDevice.PresentationParameters.BackBufferWidth;
+        //_spriteBatch.Draw(image,new Rectangle(0,0,width/3,height / 3),Color.White);
+
+        //DrawHistgram(_spriteBatch, new Rectangle(0,0,width/3,height / 3), new List<(string name, float value)>() {("123", 255), ("451", 126), ("1241", 84)},
+        //    new List<Color>() {Color.Aqua, Color.Olive, Color.Red}
+        //);
+        
         // TODO: Add your drawing code here
         base.Draw(gameTime);
     }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -9,41 +8,8 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Color = Microsoft.Xna.Framework.Color;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
-using MonoGame.Extended;
 
-
-public class HistogramRenderer
-{
-    private GraphicsDevice _graphicsDevice;
-    private SpriteBatch _spriteBatch;
-
-    public HistogramRenderer(GraphicsDevice graphicsDevice)
-    {
-        _graphicsDevice = graphicsDevice;
-        _spriteBatch = new SpriteBatch(graphicsDevice);
-    }
-
-    public void DrawHistogram(SpriteBatch spriteBatch, Dictionary<byte, int> histogram, Color color, Rectangle bounds)
-    {
-        spriteBatch.Begin();
-
-        int maxCount = histogram.Values.Max();
-        int columnWidth = bounds.Width / histogram.Count;
-
-        foreach (var kvp in histogram)
-        {
-            float normalizedHeight = (float)kvp.Value / maxCount;
-            var columnRect = new Rectangle(bounds.Left + kvp.Key * columnWidth, bounds.Bottom - (int)(normalizedHeight * bounds.Height), columnWidth, (int)(normalizedHeight * bounds.Height));
-
-            // Отрисовка столбцов гистограммы
-            spriteBatch.DrawRectangle(columnRect, Color.Black);
-            spriteBatch.FillRectangle(columnRect, color);
-        }
-
-        spriteBatch.End();
-    }
-}
-
+namespace MonogameTest;
 
 class Game2 : Game
 {
