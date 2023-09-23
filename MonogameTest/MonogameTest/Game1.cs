@@ -117,7 +117,13 @@ public class Game1 : Game
     {
 
         //var ig = Image.Load<Rgba32>("Гладиатор2.jpg");
-        var ig = Image.Load<Rgba32>("XXXL.webp");
+        var default_name = "XXXL.webp";
+        var args = Environment.GetCommandLineArgs();
+        if (args.Length > 1)
+        {
+            default_name = args[1];
+        }
+        var ig = Image.Load<Rgba32>(default_name);
         /*for (int i = 0; i < img.Width; i++)
         {
             for (int j = 0; j < img.Height; j++)

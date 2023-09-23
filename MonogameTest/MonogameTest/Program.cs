@@ -9,3 +9,7 @@ using (var secondGame = new Game2())
 {
     secondGame.Run();
 }
+using (var thirdGame = new Game3())
+{
+    thirdGame.Run();
+}

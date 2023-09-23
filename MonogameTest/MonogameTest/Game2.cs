@@ -38,8 +38,14 @@ class Game2 : Game
         histogramRendererGreen = new HistogramRenderer(GraphicsDevice);
         histogramRendererBlue = new HistogramRenderer(GraphicsDevice);
 
+        var default_name = "automobile.jpg";
+        var args = Environment.GetCommandLineArgs();
+        if (args.Length > 1)
+        {
+            default_name = args[1];
+        }
+        var imgRed = Image.Load<Rgba32>(default_name);
 
-        var imgRed = Image.Load<Rgba32>("automobile.jpg");
         for (int i = 0; i < imgRed.Width; i++)
         {
             for (int j = 0; j < imgRed.Height; j++)
@@ -54,7 +60,7 @@ class Game2 : Game
         imgRed.SaveAsPng("automobile_red.jpg");
 
 
-        var imgGreen = Image.Load<Rgba32>("automobile.jpg");
+        var imgGreen = Image.Load<Rgba32>(default_name);
         for (int i = 0; i < imgGreen.Width; i++)
         {
             for (int j = 0; j < imgGreen.Height; j++)
@@ -69,7 +75,7 @@ class Game2 : Game
         imgGreen.SaveAsPng("automobile_green.jpg");
 
 
-        var imgBlue = Image.Load<Rgba32>("automobile.jpg");
+        var imgBlue = Image.Load<Rgba32>(default_name);
         for (int i = 0; i < imgBlue.Width; i++)
         {
             for (int j = 0; j < imgBlue.Height; j++)
@@ -93,7 +99,13 @@ class Game2 : Game
 
         try
         {
-            FileStream fs = new FileStream("automobile.jpg", FileMode.Open);
+            var default_name = "automobile.jpg";
+            var args = Environment.GetCommandLineArgs();
+            if (args.Length > 1)
+            {
+                default_name = args[1];
+            }
+            FileStream fs = new FileStream(default_name, FileMode.Open);
             image_automobile = Texture2D.FromStream(GraphicsDevice, fs);
 
             fs = new FileStream("automobile_red.jpg", FileMode.Open);
