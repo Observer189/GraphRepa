@@ -1,14 +1,17 @@
-﻿using MonogameTest;
+﻿using System;
+using MonogameTest;
 
 using (var game = new Game1())
 {
-    game.Run();
+    //game.Run();
 }
 
 using (var secondGame = new Game2())
 {
-    secondGame.Run();
+    //secondGame.Run();
 }
+
+
 using (var thirdGame = new Game3())
 {
     thirdGame.Run();

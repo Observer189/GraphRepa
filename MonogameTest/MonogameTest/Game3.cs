@@ -52,7 +52,7 @@ public class Game3 : Game
                 image[y, x] = (c.H, c.S, c.V);
             }
         }
-        Console.WriteLine($"{t.H} {t.S} {t.V}");
+        //Console.WriteLine($"{t.H} {t.S} {t.V}");
         base.Initialize();
         float.Ieee754Remainder(t.H, 360);
 
