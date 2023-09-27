@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Dynamic;
 using Microsoft.Xna.Framework;
@@ -85,10 +86,13 @@ public class Game1 : Game
                     rightColor =  data[GetInd(rightBound, texture)];
             }
             rightBound.X -= 1;
-            for (var i = leftBound; i.X < rightBound.X; i.X++) {
-                data[GetInd(i, texture)] = target;
-            } 
-
+            if (leftBound.X < rightBound.X)
+                for (var i = leftBound; i.X < rightBound.X; i.X++)
+                {
+                    data[GetInd(i, texture)] = target;
+                }
+            else
+                data[GetInd(point, texture)] = target;
             for (var i = leftBound; i.X < rightBound.X; i.X++) {
                 var iShift = i;
                 iShift.Y += 1;
@@ -100,6 +104,32 @@ public class Game1 : Game
                 Fill(data, texture, from, target, iShift);
             } 
         }
+    }
+    public List<Point> GetBorder(Color[] data, Texture2D texture, Point startingPoint)
+    {
+        if (!texture.Bounds.Contains(startingPoint)) { return new List<Point>(); }
+        var borderColor = data[GetInd(startingPoint, texture)];
+        var border = new List<Point>{startingPoint};
+        //var visited = new HashSet<Point>();
+        var currentPoint = startingPoint;
+        var bound = texture.Bounds;
+        var points = new List<Point>() { new Point(0, 1), new Point(-1, 1), new Point(-1, 0), new Point(-1, -1), new Point(0, -1), new Point(1, -1), new Point(1, 0), new Point(1, 1) };
+        while (currentPoint != startingPoint){
+            var t = currentPoint;
+            foreach (var point in points)
+            {
+                t = currentPoint + point;
+                if (bound.Contains(t) && data[GetInd(t, texture)] == borderColor && !border.Contains(t))
+                {
+                    border.Add(t);
+                    currentPoint = t;
+                    goto o;
+                }
+            }
+            break;
+        o:;
+        }
+        return border;
     }
     public static int GetInd(int x, int y, Texture2D texture){
         return x + y * texture.Width;
