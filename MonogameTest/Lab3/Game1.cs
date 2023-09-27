@@ -43,21 +43,30 @@ public class Game1 : Game
             Exit();
         var data = new Color[texture.Width*texture.Height];
         texture.GetData(data);
-        if (Keyboard.GetState().IsKeyDown(Keys.Space)){
+        var state = Mouse.GetState();
+        mousePos = state.Position;
+        if (state.LeftButton == ButtonState.Pressed){
             if (!pressed) {
-                var color = data[GetInd(1, 1, texture)];
-                Fill(data, texture, color, Color.Black, new Point(1, 1));
-                pressed = true;
+                if (texture.Bounds.Contains(mousePos))
+                {
+                    var color = data[GetInd(mousePos, texture)];
+                    Fill(data, texture, color, Color.Black, mousePos);
+                    pressed = true;
+                }
             }
+        }
+        else
+        {
+            pressed = false;
         }
         texture.SetData(data);
         // TODO: Add your update logic here
-        var state = Mouse.GetState();
-        mousePos = state.Position;
+
         base.Update(gameTime);
     }
     public void Fill(Color[] data, Texture2D texture, Color from, Color target, Point point){
         if (!texture.Bounds.Contains(point)) {return;}
+        if (from == target) { return; }
         var currColor = data[GetInd(point, texture)];
         if (currColor == from) {
             //Console.WriteLine($"{from} -- {currColor}");
@@ -72,7 +81,8 @@ public class Game1 : Game
             Color rightColor =  data[GetInd(rightBound, texture)];
             while (rightBound.X < texture.Width && (rightColor == from)){
                 rightBound.X += 1;
-                rightColor =  data[GetInd(rightBound, texture)];
+                if (rightBound.X < texture.Width)
+                    rightColor =  data[GetInd(rightBound, texture)];
             }
             rightBound.X -= 1;
             for (var i = leftBound; i.X < rightBound.X; i.X++) {
