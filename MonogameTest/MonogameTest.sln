@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # 
 VisualStudioVersion = 17.5.002.0
-MinimumVisualStudioVersion = 
+MinimumVisualStudioVersion = 16.5.002.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonogameTest", "MonogameTest\MonogameTest.csproj", "{E9446C24-4795-4B06-8594-43211C3B9E06}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lab3", "Lab3\Lab3.csproj", "{9A727A2E-87C8-45EC-AE4F-5117599FF962}"
