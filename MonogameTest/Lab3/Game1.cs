@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended;
 
 namespace Lab3;
 
@@ -45,7 +46,10 @@ public class Game1 : Game
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
         // TODO: Add your drawing code here
-
+        _spriteBatch.Begin();
+        //for (var i = 0; i < 100; i++)
+            //_spriteBatch.DrawPoint(i, i, Color.Black);
+        _spriteBatch.End();
         base.Draw(gameTime);
     }
 }
