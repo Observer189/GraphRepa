@@ -110,7 +110,6 @@ public class Game1 : Game
 
     protected override void Initialize()
     {
-
         var ig = Image.Load<Rgba32>("Гладиатор2.jpg");
         var img = Image.Load<Rgba32>("XXXL.webp");
         /*for (int i = 0; i < img.Width; i++)
