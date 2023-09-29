@@ -32,39 +32,11 @@ public class Game1 : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         //texture = new Texture2D(GraphicsDevice, 1000, 1000);
-        texture = Texture2D.FromFile(GraphicsDevice, "Icon.bmp");
+        texture = Texture2D.FromFile(GraphicsDevice, "conture.png");
         // TODO: use this.Content to load your game content here
     }
     Texture2D texture;
-    Point mousePos = new Point(0, 0);
-    bool pressed = false;
-    protected override void Update(GameTime gameTime)
-    {
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-            Exit();
-        var data = new Color[texture.Width*texture.Height];
-        texture.GetData(data);
-        var state = Mouse.GetState();
-        mousePos = state.Position;
-        if (state.LeftButton == ButtonState.Pressed){
-            if (!pressed) {
-                if (texture.Bounds.Contains(mousePos))
-                {
-                    var color = data[GetInd(mousePos, texture)];
-                    Fill(data, texture, color, Color.Black, mousePos);
-                    pressed = true;
-                }
-            }
-        }
-        else
-        {
-            pressed = false;
-        }
-        texture.SetData(data);
-        // TODO: Add your update logic here
-
-        base.Update(gameTime);
-    }
+    
     public void Fill(Color[] data, Texture2D texture, Color from, Color target, Point point){
         if (!texture.Bounds.Contains(point)) {return;}
         if (from == target) { return; }
@@ -113,17 +85,23 @@ public class Game1 : Game
         //var visited = new HashSet<Point>();
         var currentPoint = startingPoint;
         var bound = texture.Bounds;
+        var angle_45 = 0;
         var points = new List<Point>() { new Point(0, 1), new Point(-1, 1), new Point(-1, 0), new Point(-1, -1), new Point(0, -1), new Point(1, -1), new Point(1, 0), new Point(1, 1) };
-        while (currentPoint != startingPoint){
+        while (true){
             var t = currentPoint;
-            foreach (var point in points)
+            var tries = 0;
+            for (tries = 0; tries < points.Count; ++tries)
             {
-                t = currentPoint + point;
+                t = currentPoint + points[angle_45];
                 if (bound.Contains(t) && data[GetInd(t, texture)] == borderColor && !border.Contains(t))
                 {
+                    angle_45 = (angle_45 + 2) % points.Count;
                     border.Add(t);
                     currentPoint = t;
                     goto o;
+                }
+                else { 
+                    angle_45 = angle_45 <= 0 ? points.Count - 1 : angle_45 - 1;
                 }
             }
             break;
@@ -140,8 +118,52 @@ public class Game1 : Game
     public static int GetInd(Point point, Texture2D texture){
         return GetInd(point.X, point.Y, texture);
     }
+    Point mousePos = new Point(0, 0);
+    bool pressedLeft = false;
+    bool pressedRight = false;
+    protected override void Update(GameTime gameTime)
+    {
+        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            Exit();
+        var data = new Color[texture.Width * texture.Height];
+        texture.GetData(data);
+        var state = Mouse.GetState();
+        mousePos = state.Position;
+        if (state.LeftButton == ButtonState.Pressed)
+        {
+            if (!pressedLeft)
+            {
+                if (texture.Bounds.Contains(mousePos))
+                {
+                    var color = data[GetInd(mousePos, texture)];
+                    Fill(data, texture, color, Color.Black, mousePos);
+                    pressedLeft = true;
+                }
+            }
+        }
+        else
+            pressedLeft = false;
+        texture.SetData(data);
+
+        if (state.RightButton == ButtonState.Pressed)
+        {
+            if (!pressedRight) 
+                if (texture.Bounds.Contains(mousePos))
+                {
+                    dots = GetBorder(data, texture, mousePos);
+                    pressedRight = true;
+                }
+        }
+        else pressedRight = false;
+        // TODO: Add your update logic here
+
+        base.Update(gameTime);
+    }
+    List<Point>? dots = null;
+    long frames = 0;
     protected override void Draw(GameTime gameTime)
     {
+        frames++;
         GraphicsDevice.Clear(Color.CornflowerBlue);
         
         // TODO: Add your drawing code here
@@ -149,6 +171,19 @@ public class Game1 : Game
         //for (var i = 0; i < 100; i++)
         _spriteBatch.Draw(texture, texture.Bounds, Color.White);
         _spriteBatch.DrawPoint(mousePos.X, mousePos.Y, Color.Black, 3.0f);
+        if (dots != null)
+        {
+            foreach (var item in dots)
+            {
+                if (frames % 30 < 15)
+                {
+                    _spriteBatch.DrawPoint(item.ToVector2(), Color.Black, 3.0f);
+                }
+                else
+                    _spriteBatch.DrawPoint(item.ToVector2(), Color.Gray, 3.0f);
+
+            }
+        }
         _spriteBatch.End();
         base.Draw(gameTime);
     }
