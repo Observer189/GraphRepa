@@ -8,11 +8,11 @@ using (var game = new Game1())
 
 using (var secondGame = new Game2())
 {
-    //secondGame.Run();
+    secondGame.Run();
 }
 
 
 using (var thirdGame = new Game3())
 {
-    thirdGame.Run();
+    //thirdGame.Run();
 }
