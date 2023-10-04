@@ -16,7 +16,8 @@ public enum State
 {
     Editing,
     Transforming,
-    Checking
+    Checking,
+    Scaling
 }
 namespace Lab4
 {
@@ -29,16 +30,27 @@ namespace Lab4
         public InputHandler inputHandler;
         public SpriteFont font;
         public State state;
+
         private Panel root;
-        private List<List<Vector2>> poligons = new List<List<Vector2>>() { new List<Vector2>() } ;
+        private List<List<Vector2>> polygons = new List<List<Vector2>>() { new List<Vector2>() } ;
         private Vector2 CenterOfCoordinates = new Vector2();
         private Matrix2 TransformationMatrix = Matrix2.Identity;
         private bool rotateLine = false;
+
+        private bool isTransforming = false;
+        private bool isScaling = false;
+
+        private float rotationAngle;
+
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+            _graphics.PreferredBackBufferWidth = 1080;
+            _graphics.PreferredBackBufferHeight = 720;
+
         }
 
         protected override void Initialize()
@@ -54,19 +66,19 @@ namespace Lab4
             inputHandler = new InputHandler(this);
             font = Content.Load<SpriteFont>("defaultfont");
             this.uiSystem = new UiSystem(this, new UntexturedStyle(this._spriteBatch) { Font = new GenericSpriteFont(font)});
-            var panel = new Panel(Anchor.AutoRight, size: new Vector2(100, 300), positionOffset: Vector2.Zero);
+            var panel = new Panel(Anchor.AutoRight, size: new Vector2(150, 300), positionOffset: Vector2.Zero);
             this.root = panel;
-            var button0 = new Button(Anchor.AutoLeft, size: new Vector2(95, 30), text: "Add poligon") { OnPressed = (elem) => { this.poligons.Add(new List<Vector2>()); } };
+            var button0 = new Button(Anchor.AutoLeft, size: new Vector2(150, 30), text: "Add poligon") { OnPressed = (elem) => { this.polygons.Add(new List<Vector2>()); } };
             panel.AddChild(button0);
-            var button1 = new Button(Anchor.AutoLeft, size: new Vector2(95, 30), text: "Editing") { OnPressed = (elem) => { this.state = State.Editing; } };
+            var button1 = new Button(Anchor.AutoLeft, size: new Vector2(150, 30), text: "Editing") { OnPressed = (elem) => { this.state = State.Editing; } };
             panel.AddChild(button1);
-            var button2 = new Button(Anchor.AutoLeft, size: new Vector2(95, 30), text: "Transforming") { OnPressed = (elem) => { this.state = State.Transforming; }, 
-                PositionOffset = new Vector2(0, 5)};
-            panel.AddChild(button2);
-            var button3 = new Button(Anchor.AutoLeft, size: new Vector2(95, 30), text: "Checking") { OnPressed = (elem) => { this.state = State.Checking; },
+            //var button2 = new Button(Anchor.AutoLeft, size: new Vector2(95, 30), text: "Transforming") { OnPressed = (elem) => { this.state = State.Transforming; }, 
+            //    PositionOffset = new Vector2(0, 5)};
+            //panel.AddChild(button2);
+            var button3 = new Button(Anchor.AutoLeft, size: new Vector2(150, 30), text: "Checking") { OnPressed = (elem) => { this.state = State.Checking; },
                 PositionOffset = new Vector2(0, 5)};
             panel.AddChild(button3);
-            var button4 = new Button(Anchor.AutoLeft, size: new Vector2(95, 30), text: "Clean scene") { OnPressed = (elem) => { this.poligons = new List<List<Vector2>>() { new List<Vector2>() }; 
+            var button4 = new Button(Anchor.AutoLeft, size: new Vector2(150, 30), text: "Clean scene") { OnPressed = (elem) => { this.polygons = new List<List<Vector2>>() { new List<Vector2>() }; 
                 this.TransformationMatrix = Matrix2.Identity; },
                 PositionOffset = new Vector2(0, 5)};
             panel.AddChild(button4);
@@ -74,6 +86,25 @@ namespace Lab4
             panel.AddChild(text);
             uiSystem.Add("panel", panel);
             // TODO: use this.Content to load your game content here
+            var button2 = new Button(Anchor.AutoLeft, size: new Vector2(150, 60), text: "Rotate around its center(a,d,r)")
+            {
+                OnPressed = (elem) =>
+                {
+                    this.state = State.Transforming;
+                    isTransforming = true; // Включаем режим "Transforming"
+                },
+            };
+            panel.AddChild(button2);
+            var button5 = new Button(Anchor.AutoLeft, size: new Vector2(150, 60), text: "Scaling relative to center")
+            {
+                OnPressed = (elem) =>
+                {
+                    this.state = State.Scaling;
+                    isScaling = true; // Включаем режим "Scaling"
+                },
+            };
+            panel.AddChild(button5);
+
         }
 
         protected override void Update(GameTime gameTime)
@@ -90,13 +121,59 @@ namespace Lab4
                     {
                         if ( inputHandler.IsPressed(MouseButton.Left) && field.Contains(mouseState.Position) )
                         {
-                            this.poligons.Last().Add(mouseState.Position.ToVector2() - CenterOfCoordinates);
+                            this.polygons.Last().Add(mouseState.Position.ToVector2() - CenterOfCoordinates);
                         }
                     }
                     break;
                 case State.Checking:
                     break;
-                case State.Transforming: 
+                case State.Transforming:
+                    if (isTransforming)
+                    {
+                        KeyboardState keyboardState = Keyboard.GetState();
+                        if (keyboardState.IsKeyDown(Keys.A))
+                        {
+                            rotationAngle -= 0.01f; 
+                        }
+                        if (keyboardState.IsKeyDown(Keys.D))
+                        {
+                            rotationAngle += 0.01f; 
+                        }
+                        if (keyboardState.IsKeyDown(Keys.R))
+                        {
+                            rotationAngle = 0f;
+                        }
+
+                        // Найдите центр масс фигуры
+                        Vector2 center = Vector2.Zero;
+                        foreach (var polygon in polygons)
+                        {
+                            foreach (var point in polygon)
+                            {
+                                center += point;
+                            }
+                        }
+                        center /= polygons.Sum(polygon => polygon.Count);
+
+                        for (int i = 0; i < polygons.Count; i++)
+                        {
+                            for (int j = 0; j < polygons[i].Count; j++)
+                            {
+                                // Перенос фигуры в начало координат
+                                var translatedPoint = polygons[i][j] - center;
+
+                                // Применение матрицы поворота
+                                var rotatedPoint = Vector2.Transform(translatedPoint, Matrix.CreateRotationZ(rotationAngle));
+
+                                // Обратный перенос обратно в исходное положение
+                                var finalPoint = rotatedPoint + center;
+
+                                polygons[i][j] = finalPoint;
+                            }
+                        }
+                    }
+                    break;
+                case State.Scaling:
                     break;
             }
             // TODO: Add your update logic here
@@ -113,7 +190,7 @@ namespace Lab4
             {
                 case State.Editing:
                     {
-                        foreach (var poligon in poligons)
+                        foreach (var poligon in polygons)
                         {
                             if (poligon.Count == 1)
                             {
@@ -136,17 +213,15 @@ namespace Lab4
                     break;
                 case State.Transforming:
                     {
-                        foreach (var poligon in poligons)
+                        foreach (var polygon in polygons)
                         {
-                            if (poligon.Count == 1)
+                            if (polygon.Count == 1)
                             {
-                                _spriteBatch.DrawPoint(TransformationMatrix.Transform(poligon[0] + this.CenterOfCoordinates), Color.Black, 2.5f);
+                                _spriteBatch.DrawPoint(polygon[0] + CenterOfCoordinates, Color.Black, 2.5f);
                             }
                             else
                             {
-                                Console.WriteLine();
-                                var p = new Polygon(poligon.Select(x => TransformationMatrix.Transform(x)));
-
+                                var p = new Polygon(polygon);
                                 _spriteBatch.DrawPolygon(CenterOfCoordinates, p, Color.Black, thickness: 1);
                             }
                         }
