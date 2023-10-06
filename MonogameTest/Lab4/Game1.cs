@@ -37,6 +37,7 @@ namespace Lab4
         private Panel root;
         //private List<List<Vector2>> polygons = new List<List<Vector2>>() { new List<Vector2>() } ;
         private List<DirPolygon> polygons = new List<DirPolygon>();
+        private int chosenPolygon = -1;
         private Vector2 CenterOfCoordinates = new Vector2();
         private Matrix2 TransformationMatrix = Matrix2.Identity;
         private bool rotateLine = false;
@@ -133,6 +134,16 @@ namespace Lab4
             CenterOfCoordinates = field.Center.ToVector2();
             field.Width -= 100;
             var mouseState = Mouse.GetState();
+            if (inputHandler.IsPressed(MouseButton.Right) && field.Contains(mouseState.Position))
+            {
+                for (int i = 0; i < polygons.Count; i++)
+                {
+                    if (polygons[i].IsInside(mouseState.Position.ToVector2()-CenterOfCoordinates))
+                    {
+                        chosenPolygon = i;
+                    }
+                }   
+            }
             switch (this.state) {
                 case State.Editing:
                     {
@@ -333,6 +344,37 @@ namespace Lab4
                                 polygon.LocalTransformations).ToVector2()+CenterOfCoordinates,Color.Black);
                     }
                 }
+            }
+
+            if (chosenPolygon != -1)
+            {
+                float minX = float.MaxValue;
+                float minY = float.MaxValue;
+                float maxX = float.MinValue;
+                float maxY = float.MinValue;
+                foreach (var vert in polygons[chosenPolygon].vertices)
+                {
+                    if (vert.X > maxX)
+                    {
+                        maxX = vert.X;
+                    }
+                    if (vert.Y > maxY)
+                    {
+                        maxY = vert.Y;
+                    }
+                    if (vert.X < minX)
+                    {
+                        minX = vert.X;
+                    }
+                    if (vert.Y < minY)
+                    {
+                        minY = vert.Y;
+                    }
+                }
+                _spriteBatch.DrawLine(minX+CenterOfCoordinates.X,minY+CenterOfCoordinates.Y,maxX+CenterOfCoordinates.X,minY+CenterOfCoordinates.Y,Color.Yellow);
+                _spriteBatch.DrawLine(maxX+CenterOfCoordinates.X,minY+CenterOfCoordinates.Y,maxX+CenterOfCoordinates.X,maxY+CenterOfCoordinates.Y,Color.Yellow);
+                _spriteBatch.DrawLine(maxX+CenterOfCoordinates.X,maxY+CenterOfCoordinates.Y,minX+CenterOfCoordinates.X,maxY+CenterOfCoordinates.Y,Color.Yellow);
+                _spriteBatch.DrawLine(minX+CenterOfCoordinates.X,maxY+CenterOfCoordinates.Y,minX+CenterOfCoordinates.X,minY+CenterOfCoordinates.Y,Color.Yellow);
             }
             /*switch (this.state)
             {
