@@ -40,6 +40,7 @@ namespace Lab4
         private int chosenPolygon = -1;
         private Vector2 CenterOfCoordinates = new Vector2();
         private Matrix2 TransformationMatrix = Matrix2.Identity;
+        private List<Vector2> CrossingDots = new List<Vector2>();
         private bool rotateLine = false;
         
         private bool hasRotated90 = false;
@@ -131,8 +132,8 @@ namespace Lab4
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
             var field = GraphicsDevice.PresentationParameters.Bounds;
-            CenterOfCoordinates = field.Center.ToVector2();
             field.Width -= 100;
+            CenterOfCoordinates = field.Center.ToVector2();
             var mouseState = Mouse.GetState();
             if (inputHandler.IsPressed(MouseButton.Right) && field.Contains(mouseState.Position))
             {
@@ -164,6 +165,24 @@ namespace Lab4
                     }
                     break;
                 case State.Checking:
+                    CrossingDots = new List<Vector2>();
+                    var l = polygons.Where(x => x.vertices.Count == 2).Select(x => x.vertices.Select(y => Vector2.Transform(y, x.LocalTransformations)).ToList()).ToList();
+                    for (int i = 0; i < l.Count; i++)
+                    {
+                        for (int j = i + 1; j < l.Count; j++)
+                        {
+                            var a = l[i][0];
+                            var b = l[i][1];
+                            var c = l[j][0];
+                            var d = l[j][1];
+                            var t = Utilities.CrossingCoordinates(a, b, c, d);
+
+                            if (t.HasValue)
+                            {
+                                CrossingDots.Add(t.Value);
+                            }
+                        }
+                    }
                     break;
                 case State.Transforming:
                         KeyboardState keyboardState = Keyboard.GetState();
@@ -345,7 +364,14 @@ namespace Lab4
                     }
                 }
             }
-
+            if (state == State.Checking)
+            {
+                foreach (var item in CrossingDots)
+                {
+                    _spriteBatch.DrawPoint(item + CenterOfCoordinates, Color.Red, size:5.0f);
+                    
+                }
+            }
             if (chosenPolygon != -1)
             {
                 float minX = float.MaxValue;
@@ -371,10 +397,10 @@ namespace Lab4
                         minY = vert.Y;
                     }
                 }
-                _spriteBatch.DrawLine(minX+CenterOfCoordinates.X,minY+CenterOfCoordinates.Y,maxX+CenterOfCoordinates.X,minY+CenterOfCoordinates.Y,Color.Yellow);
-                _spriteBatch.DrawLine(maxX+CenterOfCoordinates.X,minY+CenterOfCoordinates.Y,maxX+CenterOfCoordinates.X,maxY+CenterOfCoordinates.Y,Color.Yellow);
-                _spriteBatch.DrawLine(maxX+CenterOfCoordinates.X,maxY+CenterOfCoordinates.Y,minX+CenterOfCoordinates.X,maxY+CenterOfCoordinates.Y,Color.Yellow);
-                _spriteBatch.DrawLine(minX+CenterOfCoordinates.X,maxY+CenterOfCoordinates.Y,minX+CenterOfCoordinates.X,minY+CenterOfCoordinates.Y,Color.Yellow);
+                _spriteBatch.DrawLine(minX+CenterOfCoordinates.X,minY+CenterOfCoordinates.Y,maxX+CenterOfCoordinates.X,minY+CenterOfCoordinates.Y,Color.Green);
+                _spriteBatch.DrawLine(maxX+CenterOfCoordinates.X,minY+CenterOfCoordinates.Y,maxX+CenterOfCoordinates.X,maxY+CenterOfCoordinates.Y,Color.Green);
+                _spriteBatch.DrawLine(maxX+CenterOfCoordinates.X,maxY+CenterOfCoordinates.Y,minX+CenterOfCoordinates.X,maxY+CenterOfCoordinates.Y,Color.Green);
+                _spriteBatch.DrawLine(minX+CenterOfCoordinates.X,maxY+CenterOfCoordinates.Y,minX+CenterOfCoordinates.X,minY+CenterOfCoordinates.Y,Color.Green);
             }
             /*switch (this.state)
             {
