@@ -22,6 +22,39 @@ public enum State
 }
 namespace Lab4
 {
+    public class DirPolygon
+    {
+        public List<Vector2> vertices;
+        public List<(int,int)> edges;
+
+        public DirPolygon()
+        {
+            vertices = new List<Vector2>();
+            edges = new List<(int, int)>();
+        }
+
+        public void AddPoint(Vector2 p)
+        {
+            if (vertices.Count == 0)
+            {
+                vertices.Add(p);
+            }
+            else if(vertices.Count==1)
+            {
+                vertices.Add(p);
+                edges.Add((0,1));
+            }
+            else
+            {
+                if(vertices.Count!=2)
+                edges.RemoveAt(edges.Count-1);
+                vertices.Add(p);
+                edges.Add((vertices.Count-2,vertices.Count-1));
+                edges.Add((vertices.Count-1,0));
+            }
+        }
+    }
+
     public class Game1 : Game
     {
         private GraphicsDeviceManager _graphics;
@@ -33,13 +66,12 @@ namespace Lab4
         public State state;
 
         private Panel root;
-        private List<List<Vector2>> polygons = new List<List<Vector2>>() { new List<Vector2>() } ;
+        //private List<List<Vector2>> polygons = new List<List<Vector2>>() { new List<Vector2>() } ;
+        private List<DirPolygon> polygons = new List<DirPolygon>();
         private Vector2 CenterOfCoordinates = new Vector2();
         private Matrix2 TransformationMatrix = Matrix2.Identity;
         private bool rotateLine = false;
-
-        private List<List<Vector2>> edges = new List<List<Vector2>>();
-        private List<List<Vector2>> originalPolygons = new List<List<Vector2>>();
+        
         private bool hasRotated90 = false;
 
         private float rotationAngle;
@@ -73,7 +105,7 @@ namespace Lab4
             var button0 = new Button(Anchor.AutoLeft, size: new Vector2(150, 30), text: "Add poligon") 
             { OnPressed = (elem) => 
                 {
-                  this.polygons.Add(new List<Vector2>());
+                  this.polygons.Add(new DirPolygon());
                 }
             };
             panel.AddChild(button0);
@@ -85,7 +117,7 @@ namespace Lab4
             var button3 = new Button(Anchor.AutoLeft, size: new Vector2(150, 30), text: "Checking") { OnPressed = (elem) => { this.state = State.Checking; },
                 PositionOffset = new Vector2(0, 5)};
             panel.AddChild(button3);
-            var button4 = new Button(Anchor.AutoLeft, size: new Vector2(150, 30), text: "Clean scene") { OnPressed = (elem) => { this.polygons = new List<List<Vector2>>() { new List<Vector2>() }; 
+            var button4 = new Button(Anchor.AutoLeft, size: new Vector2(150, 30), text: "Clean scene") { OnPressed = (elem) => { this.polygons = new List<DirPolygon>(); 
                 this.TransformationMatrix = Matrix2.Identity; },
                 PositionOffset = new Vector2(0, 5)};
             panel.AddChild(button4);
@@ -142,16 +174,10 @@ namespace Lab4
                         if (inputHandler.IsPressed(MouseButton.Left) && field.Contains(mouseState.Position))
                         {
                             var newPoint = mouseState.Position.ToVector2() - CenterOfCoordinates;
-                            var currentPolygon = this.polygons.Last();
-                            currentPolygon.Add(newPoint);
-                            
-                            if (currentPolygon.Count >= 2)
+                            if (polygons.Count > 0)
                             {
-                                var newEdge = new List<Vector2>
-                                {currentPolygon[currentPolygon.Count - 2],
-                                currentPolygon[currentPolygon.Count - 1]};
-
-                                this.edges.Add(newEdge);
+                                var currentPolygon = this.polygons.Last();
+                                currentPolygon.AddPoint(newPoint);
                             }
                         }
 
@@ -178,22 +204,22 @@ namespace Lab4
                         Vector2 center = Vector2.Zero;
                         foreach (var polygon in polygons)
                         {
-                            foreach (var point in polygon)
+                            foreach (var point in polygon.vertices)
                             {
                                 center += point;
                             }
                         }
-                        center /= polygons.Sum(polygon => polygon.Count);
+                        center /= polygons.Sum(polygon => polygon.vertices.Count);
 
                         float cosAngle = (float)Math.Cos(rotationAngle);
                         float sinAngle = (float)Math.Sin(rotationAngle);
 
                         for (int i = 0; i < polygons.Count; i++)
                         {
-                            for (int j = 0; j < polygons[i].Count; j++)
+                            for (int j = 0; j < polygons[i].vertices.Count; j++)
                             {
                                 // Перенос фигуры в начало координат
-                                var translatedPoint = polygons[i][j] - center;
+                                var translatedPoint = polygons[i].vertices[j] - center;
 
                                 // Применение поворота
                                 var rotatedX = translatedPoint.X * cosAngle - translatedPoint.Y * sinAngle;
@@ -202,7 +228,7 @@ namespace Lab4
                                 // Обратный перенос обратно в исходное положение
                                 var finalPoint = new Vector2(rotatedX, rotatedY) + center;
 
-                                polygons[i][j] = finalPoint;
+                                polygons[i].vertices[j] = finalPoint;
                             }
                         }
                     break;
@@ -212,13 +238,13 @@ namespace Lab4
 
                         foreach (var polygon in polygons)
                         {
-                            foreach (var point in polygon)
+                            foreach (var point in polygon.vertices)
                             {
                                 localCenter += point;
                             }
                         }
 
-                        localCenter /= polygons.Sum(polygon => polygon.Count);
+                        localCenter /= polygons.Sum(polygon => polygon.vertices.Count);
 
                         KeyboardState keyboard_state = Keyboard.GetState();
                         float scaleFactor = 1.0f;
@@ -242,15 +268,15 @@ namespace Lab4
 
                         foreach (var polygon in polygons)
                         {
-                            for (int i = 0; i < polygon.Count; i++)
+                            for (int i = 0; i < polygon.vertices.Count; i++)
                             {
-                                Vector3 transformedPoint = Vector3.Transform(new Vector3(polygon[i], 0), transformationMatrix);
-                                polygon[i] = new Vector2(transformedPoint.X, transformedPoint.Y);
+                                Vector3 transformedPoint = Vector3.Transform(new Vector3(polygon.vertices[i], 0), transformationMatrix);
+                                polygon.vertices[i] = new Vector2(transformedPoint.X, transformedPoint.Y);
                             }
                         }
                     }
                     break;
-                case State.Rotation90:
+                /*case State.Rotation90:
                     if (!hasRotated90)
                     {
                         if (edges.Count > 0)
@@ -307,7 +333,7 @@ namespace Lab4
                             hasRotated90 = true;
                         }
                     }
-                    break;
+                    break;*/
                    
 
             }
@@ -321,7 +347,21 @@ namespace Lab4
         {
             GraphicsDevice.Clear(Color.White);
             _spriteBatch.Begin();
-            switch (this.state)
+            foreach (var polygon in polygons)
+            {
+                if (polygon.vertices.Count == 1)
+                {
+                    _spriteBatch.DrawPoint(polygon.vertices[0] + this.CenterOfCoordinates, Color.Black, 2.5f);
+                }
+                else
+                {
+                    foreach (var edge in polygon.edges)
+                    {
+                        _spriteBatch.DrawLine(polygon.vertices[edge.Item1]+CenterOfCoordinates,polygon.vertices[edge.Item2]+CenterOfCoordinates,Color.Black);
+                    }
+                }
+            }
+            /*switch (this.state)
             {
                 case State.Editing:
                     {
@@ -391,7 +431,7 @@ namespace Lab4
                     }
                     break;
 
-            }
+            }*/
             
             _spriteBatch.End();
             // TODO: Add your drawing code here
