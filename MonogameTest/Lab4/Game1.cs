@@ -11,6 +11,7 @@ using MonoGame.Extended.Shapes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MLEM.Extensions;
 
 public enum State
 {
@@ -22,38 +23,6 @@ public enum State
 }
 namespace Lab4
 {
-    public class DirPolygon
-    {
-        public List<Vector2> vertices;
-        public List<(int,int)> edges;
-
-        public DirPolygon()
-        {
-            vertices = new List<Vector2>();
-            edges = new List<(int, int)>();
-        }
-
-        public void AddPoint(Vector2 p)
-        {
-            if (vertices.Count == 0)
-            {
-                vertices.Add(p);
-            }
-            else if(vertices.Count==1)
-            {
-                vertices.Add(p);
-                edges.Add((0,1));
-            }
-            else
-            {
-                if(vertices.Count!=2)
-                edges.RemoveAt(edges.Count-1);
-                vertices.Add(p);
-                edges.Add((vertices.Count-2,vertices.Count-1));
-                edges.Add((vertices.Count-1,0));
-            }
-        }
-    }
 
     public class Game1 : Game
     {
@@ -351,13 +320,17 @@ namespace Lab4
             {
                 if (polygon.vertices.Count == 1)
                 {
-                    _spriteBatch.DrawPoint(polygon.vertices[0] + this.CenterOfCoordinates, Color.Black, 2.5f);
+                    _spriteBatch.DrawPoint(Vector3.Transform(new Vector3(polygon.vertices[0], 0),polygon.LocalTransformations).ToVector2() + this.CenterOfCoordinates, Color.Black, 2.5f);
                 }
                 else
                 {
                     foreach (var edge in polygon.edges)
                     {
-                        _spriteBatch.DrawLine(polygon.vertices[edge.Item1]+CenterOfCoordinates,polygon.vertices[edge.Item2]+CenterOfCoordinates,Color.Black);
+                        _spriteBatch.DrawLine(
+                            Vector3.Transform(new Vector3(polygon.vertices[edge.Item1], 0)
+                                ,polygon.LocalTransformations).ToVector2()+CenterOfCoordinates,
+                            Vector3.Transform(new Vector3(polygon.vertices[edge.Item2], 0),
+                                polygon.LocalTransformations).ToVector2()+CenterOfCoordinates,Color.Black);
                     }
                 }
             }
