@@ -22,11 +22,13 @@ public static class Utilities
     /// <returns></returns>
     public static Vector2? CrossingCoordinates(Vector2 a,  Vector2 b, Vector2 c, Vector2 d)
     {
-        var n = (d - c).PerpendicularClockwise();
-        var t = n.Dot(a - c) / n.Dot(a - b);
-        if (t >= 0 && t <= 1)
+        var n1 = (d - c).PerpendicularClockwise();
+        var n2 = (b - a).PerpendicularClockwise();
+        var t1 = n1.Dot(a - c) / n1.Dot(a - b);
+        var t2 = n2.Dot(c - a) / n2.Dot(c - d);
+        if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1)
         {
-            return (1 - t) * a + t * b;
+            return (1 - t1) * a + t1 * b;
         }
         else return null;
     }
