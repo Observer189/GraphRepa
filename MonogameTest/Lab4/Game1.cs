@@ -18,7 +18,7 @@ public enum State
     Editing,
     Transforming,
     Checking,
-    Scaling,
+    
     Rotation90
 }
 namespace Lab4
@@ -89,14 +89,16 @@ namespace Lab4
                 PositionOffset = new Vector2(0, 5)};
             panel.AddChild(button3);
             var button4 = new Button(Anchor.AutoLeft, size: new Vector2(150, 30), text: "Clean scene") { OnPressed = (elem) => { this.polygons = new List<DirPolygon>(); 
-                this.TransformationMatrix = Matrix2.Identity; },
+                this.TransformationMatrix = Matrix2.Identity;
+                chosenPolygon = -1;
+            },
                 PositionOffset = new Vector2(0, 5)};
             panel.AddChild(button4);
             var text =  new Paragraph(Anchor.AutoLeft, 100, (x) => { return this.state.ToString(); }, true);
             panel.AddChild(text);
             uiSystem.Add("panel", panel);
             // TODO: use this.Content to load your game content here
-            var button2 = new Button(Anchor.AutoLeft, size: new Vector2(150, 60), text: "Rotate around its center(a,d,r)")
+            var button2 = new Button(Anchor.AutoLeft, size: new Vector2(150, 60), text: "Transform selected polygon(WASD + R)")
             {
                 OnPressed = (elem) =>
                 {
@@ -105,14 +107,14 @@ namespace Lab4
             };
 
             panel.AddChild(button2);
-            var button5 = new Button(Anchor.AutoLeft, size: new Vector2(150, 60), text: "Scaling relative to center(w, s)")
-            {
-                OnPressed = (elem) =>
-                {
-                    this.state = State.Scaling;
-                },
-            };
-            panel.AddChild(button5);
+            //var button5 = new Button(Anchor.AutoLeft, size: new Vector2(150, 60), text: "Scaling relative to center(w, s)")
+            //{
+            //    OnPressed = (elem) =>
+            //    {
+            //        this.state = State.Scaling;
+            //    },
+            //};
+            //panel.AddChild(button5);
 
             var rotation90 = new Button(Anchor.AutoLeft, size: new Vector2(150, 60), text: "Rotation90")
             {
@@ -145,6 +147,7 @@ namespace Lab4
                     }
                 }   
             }
+            //if (state != State.Rotation90) hasRotated90 = false;
             switch (this.state) {
                 case State.Editing:
                     {
@@ -198,44 +201,51 @@ namespace Lab4
                         {
                             rotationAngle = 0f;
                         }
-
+                        var pols = chosenPolygon == -1 ? polygons : new List<DirPolygon>() { polygons[chosenPolygon] };
                         // центр масс фигуры
                         Vector2 center = Vector2.Zero;
-                        foreach (var polygon in polygons)
+                        foreach (var polygon in pols)
                         {
                             foreach (var point in polygon.vertices)
                             {
                                 center += point;
                             }
                         }
-                        center /= polygons.Sum(polygon => polygon.vertices.Count);
+                        center /= pols.Sum(polygon => polygon.vertices.Count);
 
                         float cosAngle = (float)Math.Cos(rotationAngle);
                         float sinAngle = (float)Math.Sin(rotationAngle);
-
-                        for (int i = 0; i < polygons.Count; i++)
+                        for (int i = 0; i < pols.Count; i++)
                         {
-                            for (int j = 0; j < polygons[i].vertices.Count; j++)
-                            {
-                                // Перенос фигуры в начало координат
-                                var translatedPoint = polygons[i].vertices[j] - center;
+                        var shift_matrix = new Matrix2() { M11 = 1,         M12 = 0, 
+                                                           M21 = 0,         M22 = 1, 
+                                                           M31 = -center.X, M32 = -center.Y};
+                        var rotation_matrix = new Matrix2() {M11 = cosAngle, M12 = -sinAngle,
+                                                             M21 = sinAngle, M22 = cosAngle,
+                                                             M31 = 0,        M32 = 0};
+                        var back_shift_matrix = new Matrix2() { M11 = 1,         M12 = 0, 
+                                                                M21 = 0,         M22 = 1, 
+                                                                M31 = center.X, M32 = center.Y};
+                        pols[i].LocalTransformations *= shift_matrix * rotation_matrix * back_shift_matrix;
+                        //for (int j = 0; j < polygons[i].vertices.Count; j++)
+                        //    {
+                        //        // Перенос фигуры в начало координат
+                        //        var translatedPoint = polygons[i].vertices[j] - center;
 
-                                // Применение поворота
-                                var rotatedX = translatedPoint.X * cosAngle - translatedPoint.Y * sinAngle;
-                                var rotatedY = translatedPoint.X * sinAngle + translatedPoint.Y * cosAngle;
+                        //        // Применение поворота
+                        //        var rotatedX = translatedPoint.X * cosAngle - translatedPoint.Y * sinAngle;
+                        //        var rotatedY = translatedPoint.X * sinAngle + translatedPoint.Y * cosAngle;
 
-                                // Обратный перенос обратно в исходное положение
-                                var finalPoint = new Vector2(rotatedX, rotatedY) + center;
+                        //        // Обратный перенос обратно в исходное положение
+                        //        var finalPoint = new Vector2(rotatedX, rotatedY) + center;
 
-                                polygons[i].vertices[j] = finalPoint;
-                            }
-                        }
-                    break;
-                case State.Scaling:
-                    {
+                        //        polygons[i].vertices[j] = finalPoint;
+                        //    }
+                        
                         Vector2 localCenter = Vector2.Zero;
+                        var pols_scaling = chosenPolygon == -1 ? polygons : new List<DirPolygon>() { polygons[chosenPolygon] };
 
-                        foreach (var polygon in polygons)
+                        foreach (var polygon in pols_scaling)
                         {
                             foreach (var point in polygon.vertices)
                             {
@@ -243,7 +253,7 @@ namespace Lab4
                             }
                         }
 
-                        localCenter /= polygons.Sum(polygon => polygon.vertices.Count);
+                        localCenter /= pols_scaling.Sum(polygon => polygon.vertices.Count);
 
                         KeyboardState keyboard_state = Keyboard.GetState();
                         float scaleFactor = 1.0f;
@@ -256,83 +266,95 @@ namespace Lab4
                         {
                             scaleFactor = 0.9f; 
                         }
+                        Matrix2 translationMatrix = Matrix2.CreateTranslation(-localCenter.X, -localCenter.Y);
 
-                        Matrix scaleMatrix = Matrix.CreateScale(scaleFactor, scaleFactor, 1f);
+                        Matrix2 scaleMatrix = Matrix2.CreateScale(scaleFactor, scaleFactor);
 
+                        Matrix2 backTransformationMatrix = Matrix2.CreateTranslation(localCenter.X, localCenter.Y);
                         // матрица трансляции для перемещения в начало координат
-                        Matrix translationMatrix = Matrix.CreateTranslation(-localCenter.X, -localCenter.Y, 0f);
 
                         // итоговая матрицу преобразования (сначала трансляция, затем масштабирование)
-                        Matrix transformationMatrix = scaleMatrix * translationMatrix;
+                        Matrix2 transformationMatrix = translationMatrix * scaleMatrix * backTransformationMatrix;
 
-                        foreach (var polygon in polygons)
+                        foreach (var polygon in pols_scaling)
                         {
-                            for (int i = 0; i < polygon.vertices.Count; i++)
-                            {
-                                Vector3 transformedPoint = Vector3.Transform(new Vector3(polygon.vertices[i], 0), transformationMatrix);
-                                polygon.vertices[i] = new Vector2(transformedPoint.X, transformedPoint.Y);
-                            }
+                            polygon.LocalTransformations *= transformationMatrix;
+                            //for (int i = 0; i < polygon.vertices.Count; i++)
+                            //{
+                            //    Vector3 transformedPoint = Vector3.Transform(new Vector3(polygon.vertices[i], 0), transformationMatrix);
+                            //    polygon.vertices[i] = new Vector2(transformedPoint.X, transformedPoint.Y);
+                            //}
                         }
                     }
                     break;
-                /*case State.Rotation90:
+                case State.Rotation90:
                     if (!hasRotated90)
                     {
-                        if (edges.Count > 0)
+                        var edges = polygons.Where(x => x.vertices.Count == 2).ToList();
+                        foreach (var edge in edges)
                         {
-                            var firstEdge = edges[0];
-
-                            var edgeCenter = Vector2.Zero;
-                            foreach (var point in firstEdge)
-                            {
-                                edgeCenter += point;
-                            }
-                            edgeCenter /= firstEdge.Count;
-
-                            // Угол поворота на 90 градусов
-                            float rotationAngle = MathHelper.PiOver2;
-
-                            // Вычисляем новые координаты для точек отрезка после поворота
-                            for (int i = 0; i < firstEdge.Count; i++)
-                            {
-                                var point = firstEdge[i];
-
-                                // Перенос точки к началу координат
-                                var translatedPoint = point - edgeCenter;
-
-                                // Применение матрицы поворота
-                                var rotatedX = translatedPoint.X * (float)Math.Cos(rotationAngle) - translatedPoint.Y * (float)Math.Sin(rotationAngle);
-                                var rotatedY = translatedPoint.X * (float)Math.Sin(rotationAngle) + translatedPoint.Y * (float)Math.Cos(rotationAngle);
-
-                                // Обратный перенос обратно в исходное положение
-                                var finalPoint = new Vector2(rotatedX, rotatedY) + edgeCenter;
-
-                                firstEdge[i] = finalPoint;
-                            }
-
-                            // Обновление фигуры polygons после поворота ребра
-                            foreach (var polygon in polygons)
-                            {
-                                for (int i = 0; i < polygon.Count; i++)
-                                {
-                                    // Перенос точки к началу координат
-                                    var translatedPoint = polygon[i] - edgeCenter;
-
-                                    // Применение матрицы поворота
-                                    var rotatedX = translatedPoint.X * (float)Math.Cos(rotationAngle) - translatedPoint.Y * (float)Math.Sin(rotationAngle);
-                                    var rotatedY = translatedPoint.X * (float)Math.Sin(rotationAngle) + translatedPoint.Y * (float)Math.Cos(rotationAngle);
-
-                                    // Обратный перенос обратно в исходное положение
-                                    var finalPoint = new Vector2(rotatedX, rotatedY) + edgeCenter;
-
-                                    polygon[i] = finalPoint;
-                                }
-                            }
-
+                            var middle = (edge.vertices[0] + edge.vertices[1]) / 2;
+                            var shift_center = Matrix2.CreateTranslation(-middle);
+                            var rotate_matrix = Matrix2.CreateRotationZ(MathF.PI / 2);
+                            var unshift_center = Matrix2.CreateTranslation(middle);
+                            edge.LocalTransformations *= shift_center * rotate_matrix * unshift_center;
                             hasRotated90 = true;
                         }
+                        //if (edges.Count > 0)
+                        //{
+                        //    var firstEdge = edges[0];
+
+                        //    var edgeCenter = Vector2.Zero;
+                        //    foreach (var point in firstEdge)
+                        //    {
+                        //        edgeCenter += point;
+                        //    }
+                        //    edgeCenter /= firstEdge.Count();
+
+                        //    // Угол поворота на 90 градусов
+                        //    float rotationAngle = MathHelper.PiOver2;
+
+                        //    // Вычисляем новые координаты для точек отрезка после поворота
+                        //    for (int i = 0; i < firstEdge.Count(); i++)
+                        //    {
+                        //        var point = firstEdge[i];
+
+                        //        // Перенос точки к началу координат
+                        //        var translatedPoint = point - edgeCenter;
+
+                        //        // Применение матрицы поворота
+                        //        var rotatedX = translatedPoint.X * (float)Math.Cos(rotationAngle) - translatedPoint.Y * (float)Math.Sin(rotationAngle);
+                        //        var rotatedY = translatedPoint.X * (float)Math.Sin(rotationAngle) + translatedPoint.Y * (float)Math.Cos(rotationAngle);
+
+                        //        // Обратный перенос обратно в исходное положение
+                        //        var finalPoint = new Vector2(rotatedX, rotatedY) + edgeCenter;
+
+                        //        firstEdge[i] = finalPoint;
+                        //    }
+
+                        //    // Обновление фигуры polygons после поворота ребра
+                        //    foreach (var polygon in polygons)
+                        //    {
+                        //        for (int i = 0; i < polygon.vertices.Count(); i++)
+                        //        {
+                        //            // Перенос точки к началу координат
+                        //            var translatedPoint = polygon.vertices[i] - edgeCenter;
+
+                        //            // Применение матрицы поворота
+                        //            var rotatedX = translatedPoint.X * (float)Math.Cos(rotationAngle) - translatedPoint.Y * (float)Math.Sin(rotationAngle);
+                        //            var rotatedY = translatedPoint.X * (float)Math.Sin(rotationAngle) + translatedPoint.Y * (float)Math.Cos(rotationAngle);
+
+                        //            // Обратный перенос обратно в исходное положение
+                        //            var finalPoint = new Vector2(rotatedX, rotatedY) + edgeCenter;
+
+                        //            polygon[i] = finalPoint;
+                        //        }
+                        //    }
+
+                        //    hasRotated90 = true;
+                        //}
                     }
-                    break;*/
+                    break;
                    
 
             }
@@ -350,17 +372,24 @@ namespace Lab4
             {
                 if (polygon.vertices.Count == 1)
                 {
-                    _spriteBatch.DrawPoint(Vector3.Transform(new Vector3(polygon.vertices[0], 0),polygon.LocalTransformations).ToVector2() + this.CenterOfCoordinates, Color.Black, 2.5f);
+                    if (state != State.Editing)
+                        _spriteBatch.DrawPoint(Vector3.Transform(new Vector3(polygon.vertices[0], 0), polygon.LocalTransformations).ToVector2() + this.CenterOfCoordinates, Color.Black, 2.5f);
+                    else
+                        _spriteBatch.DrawPoint(polygon.vertices[0] + CenterOfCoordinates, Color.Black, 2.5f);
                 }
                 else
                 {
                     foreach (var edge in polygon.edges)
                     {
-                        _spriteBatch.DrawLine(
+                        if (state != State.Editing)
+                            _spriteBatch.DrawLine(
                             Vector3.Transform(new Vector3(polygon.vertices[edge.Item1], 0)
                                 ,polygon.LocalTransformations).ToVector2()+CenterOfCoordinates,
                             Vector3.Transform(new Vector3(polygon.vertices[edge.Item2], 0),
                                 polygon.LocalTransformations).ToVector2()+CenterOfCoordinates,Color.Black);
+                        else
+                            _spriteBatch.DrawLine(polygon.vertices[edge.Item1] + CenterOfCoordinates,
+                            polygon.vertices[edge.Item2] + CenterOfCoordinates, Color.Black);
                     }
                 }
             }
