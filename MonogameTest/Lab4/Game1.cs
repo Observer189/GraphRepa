@@ -141,7 +141,7 @@ namespace Lab4
             {
                 for (int i = 0; i < polygons.Count; i++)
                 {
-                    if (polygons[i].IsInside(mouseState.Position.ToVector2()-CenterOfCoordinates))
+                    if (polygons[i].GetTransformedCopy().IsInside(mouseState.Position.ToVector2()-CenterOfCoordinates))
                     {
                         chosenPolygon = i;
                     }
@@ -407,7 +407,7 @@ namespace Lab4
                 float minY = float.MaxValue;
                 float maxX = float.MinValue;
                 float maxY = float.MinValue;
-                foreach (var vert in polygons[chosenPolygon].vertices)
+                foreach (var vert in polygons[chosenPolygon].GetTransformedCopy().vertices)
                 {
                     if (vert.X > maxX)
                     {
