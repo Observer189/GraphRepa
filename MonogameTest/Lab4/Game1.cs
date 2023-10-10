@@ -98,7 +98,7 @@ namespace Lab4
             panel.AddChild(text);
             uiSystem.Add("panel", panel);
             // TODO: use this.Content to load your game content here
-            var button2 = new Button(Anchor.AutoLeft, size: new Vector2(150, 60), text: "Transform selected polygon(WASD + R)")
+            var button2 = new Button(Anchor.AutoLeft, size: new Vector2(150, 60), text: "Transform selected polygon(s)")
             {
                 OnPressed = (elem) =>
                 {
@@ -134,7 +134,7 @@ namespace Lab4
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
             var field = GraphicsDevice.PresentationParameters.Bounds;
-            field.Width -= 100;
+            field.Width -= 150;
             CenterOfCoordinates = field.Center.ToVector2();
             var mouseState = Mouse.GetState();
             if (inputHandler.IsPressed(MouseButton.Right) && field.Contains(mouseState.Position))
@@ -206,7 +206,7 @@ namespace Lab4
                         Vector2 center = Vector2.Zero;
                         foreach (var polygon in pols)
                         {
-                            foreach (var point in polygon.vertices)
+                            foreach (var point in polygon.GetTransformedCopy().vertices)
                             {
                                 center += point;
                             }
@@ -276,6 +276,32 @@ namespace Lab4
                         // итоговая матрицу преобразования (сначала трансляция, затем масштабирование)
                         Matrix2 transformationMatrix = translationMatrix * scaleMatrix * backTransformationMatrix;
 
+                        float shift_X = 0;
+                        float shift_Y = 0;
+                        const float shiftAmount = 4f;
+                        if (keyboard_state.IsKeyDown(Keys.F))
+                        {
+                            shift_X -= shiftAmount;
+                        }
+                        if (keyboard_state.IsKeyDown(Keys.H))
+                        {
+                            shift_X += shiftAmount;
+                        }
+                        if (keyboard_state.IsKeyDown(Keys.T))
+                        {
+                            shift_Y -= shiftAmount;
+                        }
+                        if (keyboard_state.IsKeyDown(Keys.G))
+                        {
+                            shift_Y += shiftAmount;
+                        }
+                        var finalTranslationMatrix = new Matrix2()
+                        {
+                            M11 = 1, M12 = 0,
+                            M21 = 0, M22 = 1,
+                            M31 = shift_X, M32 = shift_Y,
+                        };
+                        transformationMatrix *= finalTranslationMatrix;
                         foreach (var polygon in pols_scaling)
                         {
                             polygon.LocalTransformations *= transformationMatrix;
@@ -502,7 +528,12 @@ namespace Lab4
                     break;
 
             }*/
-            
+            if (state == State.Transforming)
+            {
+                _spriteBatch.DrawString(font, "WASD to rotate and scale polygon.\n" +
+                    "R to stop rotation.\n" +
+                    "TFGH to move polygon.\n", new Vector2(0, 0), Color.Black);
+            }
             _spriteBatch.End();
             // TODO: Add your drawing code here
             this.uiSystem.Draw(gameTime, this._spriteBatch);
