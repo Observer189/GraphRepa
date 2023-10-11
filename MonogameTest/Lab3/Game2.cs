@@ -240,8 +240,8 @@ public class Game2 : Game
 
         _spriteBatch.DrawString(_font, "Q: Zoom +\nE: Zoom -", new Vector2(650, 0), Color.White);
 
-        //print_Bresenheim();
-        print_VU();
+        print_Bresenheim();
+        //print_VU();
 
         _spriteBatch.End();
 
