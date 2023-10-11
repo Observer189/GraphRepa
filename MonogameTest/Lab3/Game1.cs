@@ -81,24 +81,24 @@ public class Game1 : Game
                 }
             else
                 data[GetInd(point, texture)] = target;
-            for (var i = leftBound; i.X < rightBound.X; i.X++) {
+            for (var i = leftBound; i.X <= rightBound.X; i.X++) {
                 var iShift = i;
                 iShift.Y += 1;
                 if (fillImage != null) {
                     var imOf = imageOffset.Value;
                     imOf.Y +=1;
-                    imOf.X = i.X - point.X + leftBound.X;
+                    imOf.X += i.X - point.X;
                     Fill(data, texture, from, target, iShift, fillImage, tectureBound, imOf);
                 }
                 else Fill(data, texture, from, target, iShift, null, null, null);
             } 
-            for (var i = leftBound; i.X < rightBound.X; i.X++) {
+            for (var i = leftBound; i.X <= rightBound.X; i.X++) {
                 var iShift = i;
                 iShift.Y -= 1;
                 if (fillImage != null) {
                     var imOf = imageOffset.Value;
                     imOf.Y -=1;
-                    imOf.X =  i.X - point.X + leftBound.X;
+                    imOf.X += i.X - point.X ;
                     Fill(data, texture, from, target, iShift, fillImage, tectureBound, imOf);
                 }
                 else Fill(data, texture, from, target, iShift, null, null, null);
