@@ -418,6 +418,15 @@ namespace Lab4
                             polygon.vertices[edge.Item2] + CenterOfCoordinates, Color.Black);
                     }
                 }
+
+                if (state == State.Checking && polygon.vertices.Count == 2)
+                {
+                    var p1 = Vector3.Transform(new Vector3(polygon.vertices[0], 0)
+                        , polygon.LocalTransformations).ToVector2() + CenterOfCoordinates;
+                    var p2  = Vector3.Transform(new Vector3(polygon.vertices[1], 0)
+                        , polygon.LocalTransformations).ToVector2() + CenterOfCoordinates;
+                    _spriteBatch.DrawString(font,(Utilities.PointOnTheRight(Mouse.GetState().Position.ToVector2(),p1,p2))?"On the left":"On the right",(p1+p2)/2,Color.Black);
+                }
             }
             if (state == State.Checking)
             {
