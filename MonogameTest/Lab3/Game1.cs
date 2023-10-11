@@ -190,7 +190,7 @@ public class Game1 : Game
                     var img = new Color[fillTexture.Width * fillTexture.Height];
                     fillTexture.GetData(img);
                     var color = data[GetInd(mousePos, texture)];
-                    Fill(data, texture, color, Color.Black, mousePos, img, fillTexture.Bounds, new Point(0, 0));
+                    Fill(data, texture, color, Color.Black, mousePos, img, fillTexture.Bounds, new Point(fillTexture.Width / 2, fillTexture.Height / 2));
                     pressedMiddle = true;
                 }
             }
