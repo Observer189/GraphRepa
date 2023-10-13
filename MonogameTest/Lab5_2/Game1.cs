@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Lab5_2
 {
+   
     public class Game1 : Game
     {
         private GraphicsDeviceManager _graphics;
