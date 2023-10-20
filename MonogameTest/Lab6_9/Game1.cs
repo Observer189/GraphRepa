@@ -16,7 +16,7 @@ namespace Lab6_9
         int ScreenHeight = 720;
         List<Object3D> objects = new List<Object3D>() {  };
         List<PrimitiveShape> shapes = new List<PrimitiveShape>() { };
-
+        PrimitiveShape OXYZLines = PrimitiveShape.OXYZLines(4);
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -218,7 +218,11 @@ namespace Lab6_9
                 var t = ProjectWireFrameWithMatrix(camera, prim);
                 DrawWireFrame(buffer, t, scale, center, Color.Red);
             }
-            //DrawLine(buffer, (new Vector2(-1), new Vector2(1)), scale, center, Color.Black);
+
+            //Линия координат
+            DrawWireFrame(buffer, ProjectWireFrameWithMatrix(camera, OXYZLines), scale, center, Color.Blue);
+            
+            
             var textureBuffer = new Color[ScreenHeight * ScreenWidth];
             for (int y = 0; y < buffer.GetLength(0); y++)
             {
