@@ -1,13 +1,20 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MLEM.Cameras;
 using MLEM.Extensions;
+using MLEM.Input;
 using System;
 using System.Collections.Generic;
 using static MLEM.Graphics.StaticSpriteBatch;
 
 namespace Lab6_9
 {
+    public enum CurrentCamera
+    {
+        Axonometric,
+        Perspective
+    }
     public class Game1 : Game
     {
         private GraphicsDeviceManager _graphics;
@@ -17,6 +24,7 @@ namespace Lab6_9
         List<Object3D> objects = new List<Object3D>() {  };
         List<PrimitiveShape> shapes = new List<PrimitiveShape>() { };
         PrimitiveShape OXYZLines = PrimitiveShape.OXYZLines(4);
+        CurrentCamera CurrentCamera = CurrentCamera.Axonometric;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -39,6 +47,7 @@ namespace Lab6_9
 
             // TODO: Add your initialization logic here
             screenTexture = new Texture2D(GraphicsDevice, ScreenWidth, ScreenHeight);
+            inputHandler = new InputHandler(this);
             base.Initialize();
         }
 
@@ -113,12 +122,12 @@ namespace Lab6_9
                 for (int i = 0; i < polygon.Length; i++)
                 {
                     var i1 = (i + 1 == polygon.Length) ? 0 : i + 1;
-                    var v1 = vertixes[polygon[i]];
-                    var v2 = vertixes[polygon[i1]];
-                    var begin = Vector3.Transform(v1, resMatrix);
-                    var end = Vector3.Transform(v2, resMatrix);
-                    var vec2begin = new Vector2 { X = begin.X, Y = -begin.Y };
-                    var vec2end = new Vector2 { X = end.X, Y = -end.Y };
+                    var v1 = new Vector4(vertixes[polygon[i]], 1);
+                    var v2 = new Vector4(vertixes[polygon[i1]], 1);
+                    var begin = Vector4.Transform(v1, resMatrix);
+                    var end = Vector4.Transform(v2, resMatrix);
+                    var vec2begin = new Vector2 { X = begin.X / begin.W, Y = -begin.Y / begin.W };
+                    var vec2end = new Vector2 { X = end.X / end.W, Y = -end.Y / end.W };
 
                     wf.Add((vec2begin, vec2end));
                 }
@@ -132,16 +141,17 @@ namespace Lab6_9
             var resMatrix = shape.transformationMatrix * projectionMatrix;
             foreach (var polygon in shape.triangles)
             {
-                var v1 = vertixes[polygon.v1];
-                var v2 = vertixes[polygon.v2];
-                var v3 = vertixes[polygon.v3];
-                var v1Tr = Vector3.Transform(v1, resMatrix);
-                var v2Tr = Vector3.Transform(v2, resMatrix);
-                var v3Tr = Vector3.Transform(v3, resMatrix);
+                
+                var v1 = new Vector4(vertixes[polygon.v1], 1);
+                var v2 = new Vector4(vertixes[polygon.v2], 1);
+                var v3 = new Vector4(vertixes[polygon.v3], 1);
+                var v1Tr = Vector4.Transform(v1, resMatrix);
+                var v2Tr = Vector4.Transform(v2, resMatrix);
+                var v3Tr = Vector4.Transform(v3, resMatrix);
 
-                var v1v2 = new Vector2 { X = v1Tr.X, Y = -v1Tr.Y };
-                var v2v2 = new Vector2 { X = v2Tr.X, Y = -v2Tr.Y };
-                var v3v2 = new Vector2 { X = v3Tr.X, Y = -v3Tr.Y };
+                var v1v2 = new Vector2 { X = v1Tr.X / v1Tr.W, Y = -v1Tr.Y / v1Tr.W };
+                var v2v2 = new Vector2 { X = v2Tr.X / v2Tr.W, Y = -v2Tr.Y / v2Tr.W };
+                var v3v2 = new Vector2 { X = v3Tr.X / v3Tr.W, Y = -v3Tr.Y / v3Tr.W };
 
                 
                 wf.Add((v1v2, v2v2));
@@ -171,8 +181,21 @@ namespace Lab6_9
             };
             return matrix;
         }
+        static Matrix GetPerspective(float scale)
+        {
+            var matrix = new Matrix()
+            {
+                M11 = 1, 
+                M22 = 1, 
+                M33 = 0, M34 = -1/scale,
+                M44 = 1,
+            };
+            return matrix;
+        }
+        InputHandler inputHandler = null;
         protected override void Update(GameTime gameTime)
         {
+            inputHandler.Update(gameTime);
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
@@ -193,15 +216,39 @@ namespace Lab6_9
             {
                 AxonometricProjectionAngles.psi -= 0.1f;
             }
+            if (inputHandler.IsPressed(Keys.C))
+            {
+                CurrentCamera = CurrentCamera switch
+                {
+                    CurrentCamera.Axonometric => CurrentCamera.Perspective,
+                    CurrentCamera.Perspective => CurrentCamera.Axonometric,
+                    _ => throw new NotImplementedException()
+                };
+            }
             base.Update(gameTime);
         }
+        
         protected override void Draw(GameTime gameTime)
         {
             //Первая координата - Y, вторая - X. Так быстрее.
             var buffer = new Color[ScreenHeight, ScreenWidth];
             Vector2 center = new Vector2(ScreenWidth / 2, ScreenHeight / 2);
-            float scale = 50f;
-            var camera = GetAxonometric(AxonometricProjectionAngles.phi, AxonometricProjectionAngles.psi);
+            float scale = CurrentCamera switch {
+
+                CurrentCamera.Axonometric => 50f,
+                CurrentCamera.Perspective => 200f,
+                _ => throw new NotImplementedException()
+
+            };
+            var camera = CurrentCamera switch
+            {
+                CurrentCamera.Axonometric => GetAxonometric(AxonometricProjectionAngles.phi, AxonometricProjectionAngles.psi),
+                CurrentCamera.Perspective => Matrix.CreateRotationZ(-AxonometricProjectionAngles.psi) * Matrix.CreateRotationX(-AxonometricProjectionAngles.phi) * Matrix.CreateTranslation(0, 0, -5) * GetPerspective(1.3f),
+                _ => throw new NotImplementedException()
+
+            };
+            //var camera = GetAxonometric(AxonometricProjectionAngles.phi, AxonometricProjectionAngles.psi);
+            //var camera = Matrix.CreateRotationZ(-AxonometricProjectionAngles.psi) * Matrix.CreateRotationX(-AxonometricProjectionAngles.phi) * Matrix.CreateTranslation(0, 0, -5) * GetPerspective(1.3f);
             //TODO: Добавить перспективную матричную камеру
 
 
