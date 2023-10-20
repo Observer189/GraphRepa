@@ -28,6 +28,7 @@ namespace Lab6_9
         Texture2D screenTexture = null;
         protected override void Initialize()
         {
+            //Добавлять объекты и их сдвигать можно тут
             var cubeObj = Object3D.Cube();
             cubeObj.transformationMatrix *= Matrix.CreateTranslation(3, 0, 0);
             objects.Add(cubeObj);
@@ -201,6 +202,10 @@ namespace Lab6_9
             Vector2 center = new Vector2(ScreenWidth / 2, ScreenHeight / 2);
             float scale = 50f;
             var camera = GetAxonometric(AxonometricProjectionAngles.phi, AxonometricProjectionAngles.psi);
+            //TODO: Добавить перспективную матричную камеру
+
+
+
             foreach (var prim in shapes)
             {
                 var t = ProjectWireFrameWithMatrix(camera, prim);

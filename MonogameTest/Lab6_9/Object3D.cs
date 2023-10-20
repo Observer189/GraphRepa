@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 
 namespace Lab6_9
 {
+    /// <summary>
+    /// Более быстрая реализация, но с использованием только и только треугольных полигонов
+    /// Но кому другие полигоны нужны в 3D-моделях?
+    /// </summary>
     public struct Object3D
     {
         /// <summary>
