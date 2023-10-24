@@ -6,6 +6,7 @@ using MLEM.Extensions;
 using MLEM.Input;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using static MLEM.Graphics.StaticSpriteBatch;
 
 namespace Lab6_9
@@ -25,6 +26,9 @@ namespace Lab6_9
         List<PrimitiveShape> shapes = new List<PrimitiveShape>() { };
         PrimitiveShape OXYZLines = PrimitiveShape.OXYZLines(4);
         CurrentCamera CurrentCamera = CurrentCamera.Axonometric;
+        //Индекс текущего объекта, -1 если никакой объект не выбран
+        int objectsIndex = -1;
+        int shapesIndex = -1;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -199,20 +203,20 @@ namespace Lab6_9
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            var k = Keyboard.GetState();
-            if (k.IsKeyDown(Keys.W))
+            //var k = Keyboard.GetState();
+            if (inputHandler.IsDown(Keys.W))
             {
                 AxonometricProjectionAngles.phi -= 0.1f;
             }
-            if (k.IsKeyDown(Keys.S))
+            if (inputHandler.IsDown(Keys.S))
             {
                 AxonometricProjectionAngles.phi += 0.1f;
             }
-            if (k.IsKeyDown(Keys.D))
+            if (inputHandler.IsDown(Keys.D))
             {
                 AxonometricProjectionAngles.psi += 0.1f;
             }
-            if (k.IsKeyDown(Keys.A))
+            if (inputHandler.IsDown(Keys.A))
             {
                 AxonometricProjectionAngles.psi -= 0.1f;
             }
@@ -224,6 +228,17 @@ namespace Lab6_9
                     CurrentCamera.Perspective => CurrentCamera.Axonometric,
                     _ => throw new NotImplementedException()
                 };
+            }
+            if (inputHandler.IsPressed(Keys.Tab))
+            {
+                if (shapesIndex == -1)
+                {
+                    if (objectsIndex < objects.Count - 1) { objectsIndex++; } else { objectsIndex = -1; shapesIndex++; }
+                }
+                else if(objectsIndex  == -1) {
+                    if (shapesIndex < shapes.Count - 1) { shapesIndex++; } else { shapesIndex = -1; objectsIndex = -1; }
+
+                }
             }
             base.Update(gameTime);
         }
@@ -252,19 +267,31 @@ namespace Lab6_9
             //TODO: Добавить перспективную матричную камеру
 
 
-
-            foreach (var prim in shapes)
+            for (int i = 0; i < shapes.Count; i++)
             {
-                var t = ProjectWireFrameWithMatrix(camera, prim);
-
-                DrawWireFrame(buffer, t, scale, center, Color.Black);
-
+                var t = ProjectWireFrameWithMatrix(camera, shapes[i]);
+                if (i == shapesIndex) {
+                    DrawWireFrame(buffer, t, scale, center, Color.Green);
+                }
+                else
+                {
+                    DrawWireFrame(buffer, t, scale, center, Color.Black);
+                }
             }
-            foreach (var prim in objects)
+            for (int i = 0; i < objects.Count; i++)
             {
-                var t = ProjectWireFrameWithMatrix(camera, prim);
-                DrawWireFrame(buffer, t, scale, center, Color.Red);
+                var t = ProjectWireFrameWithMatrix(camera, objects[i]);
+                if (i == objectsIndex)
+                {
+                    DrawWireFrame(buffer, t, scale, center, Color.Green);
+                }
+                else
+                {
+                    DrawWireFrame(buffer, t, scale, center, Color.Black);
+
+                }
             }
+
 
             //Линия координат
             DrawWireFrame(buffer, ProjectWireFrameWithMatrix(camera, OXYZLines), scale, center, Color.Blue);
