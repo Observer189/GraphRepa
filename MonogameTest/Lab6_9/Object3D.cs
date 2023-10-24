@@ -11,18 +11,18 @@ namespace Lab6_9
     /// Более быстрая реализация, но с использованием только и только треугольных полигонов
     /// Но кому другие полигоны нужны в 3D-моделях?
     /// </summary>
-    public struct Object3D
+    public struct Object3D:IEditableShape
     {
         /// <summary>
         /// Координаты вершин в локальных к объекту вершинах
         /// Y вверх, X враво, Z на нас
         /// </summary>
-        public Vector3[] vertixes; 
+        private Vector3[] vertices; 
         public (int v1, int v2, int v3)[] triangles;
         /// <summary>
         /// Матрица, выполняющая сдвиги относительно центра мира.
         /// </summary>
-        public Matrix transformationMatrix = Matrix.Identity;
+        private Matrix transformationMatrix = Matrix.Identity;
 
         public Object3D()
         {
@@ -32,7 +32,19 @@ namespace Lab6_9
         {
             var v = new Vector3[] { new(-1, -1, -1), new(1, -1, -1), new(1, -1, 1), new(-1, -1, 1), new(-1, 1, -1), new(1, 1, -1), new(1, 1, 1), new(-1, 1, 1), };
             var tr = new (int, int, int)[] {(0, 1, 2), (0, 3, 2), (0, 1, 5), (0, 4, 5), (1, 2, 6), (1, 6, 5), (4, 5, 6), (4, 7, 6), (0, 3, 4), (3, 4, 7), (2, 3, 7), (2, 7, 6) };
-            return new Object3D() { vertixes = v, triangles =  tr };
+            return new Object3D() { vertices = v, triangles =  tr };
+        }
+
+        public Vector3[] Vertices
+        {
+            get => vertices;
+            set => vertices = value;
+        }
+
+        public Matrix TransformationMatrix
+        {
+            get => transformationMatrix;
+            set => transformationMatrix = value;
         }
     }
 }

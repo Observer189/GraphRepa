@@ -7,6 +7,11 @@ using MLEM.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MLEM.Font;
+using MLEM.Misc;
+using MLEM.Ui;
+using MLEM.Ui.Elements;
+using MLEM.Ui.Style;
 using static MLEM.Graphics.StaticSpriteBatch;
 
 namespace Lab6_9
@@ -29,9 +34,23 @@ namespace Lab6_9
         //Индекс текущего объекта, -1 если никакой объект не выбран
         int objectsIndex = -1;
         int shapesIndex = -1;
+
+        public UiSystem uiSystem;
+        public SpriteFont font;
+
+        private List<Tool> tools;
+        private Tool currentTool;
+        private Panel toolsPanel;
+        private Panel toolUsePanel;
         public Game1()
         {
+            MlemPlatform.Current = new MlemPlatform.DesktopGl<TextInputEventArgs>((w, c) => w.TextInput += c);
             _graphics = new GraphicsDeviceManager(this);
+            tools = new List<Tool>();
+            tools.Add(new TransformTool());
+            tools.Add(new RotateTool());
+            tools.Add(new ScaleTool());
+            tools.Add(new ScaleTool.LocalScaleTool());
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             _graphics.PreferredBackBufferWidth = ScreenWidth;
@@ -42,7 +61,7 @@ namespace Lab6_9
         {
             //Добавлять объекты и их сдвигать можно тут
             var cubeObj = Object3D.Cube();
-            cubeObj.transformationMatrix *= Matrix.CreateTranslation(3, 0, 0);
+            cubeObj.TransformationMatrix *= Matrix.CreateTranslation(3, 0, 0);
             objects.Add(cubeObj);
 
             var cubeShape = PrimitiveShape.Cube();
@@ -58,8 +77,25 @@ namespace Lab6_9
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            // TODO: use this.Content to load your game content here
+            font = Content.Load<SpriteFont>("defaultfont");
+            uiSystem = new UiSystem(this, new UntexturedStyle(this._spriteBatch) { Font = new GenericSpriteFont(font)});
+            
+            toolsPanel = new Panel(Anchor.AutoRight, size: new Vector2(150, 500), positionOffset: Vector2.Zero);
+            for (int i = 0; i < tools.Count; i++)
+            {
+                var tool = tools[i];
+                var button = new Button(Anchor.AutoLeft, size: new Vector2(150, 30), text: tools[i].name) 
+                { OnPressed = (elem) => 
+                    {
+                        ChooseTool(tool);
+                    }
+                };
+                toolsPanel.AddChild(button);
+            }
+            toolUsePanel = new Panel(Anchor.AutoLeft, size: new Vector2(150, 80), positionOffset: Vector2.Zero,true);
+            toolUsePanel.IsHidden = true;
+            uiSystem.Add("panel", toolsPanel);
+            uiSystem.Add("toolUse", toolUsePanel);
         }
 
         
@@ -116,18 +152,31 @@ namespace Lab6_9
                 DrawLine(buffer, line, scale, offset, color);
             }
         }
+
+        List<(Vector2 begin, Vector2 end)> ProjectWireFrameWithMatrix(Matrix projectionMatrix, IEditableShape shape)
+        {
+            if (shape is PrimitiveShape s)
+            {
+                return ProjectWireFrameWithMatrix(projectionMatrix, s);
+            }
+            else
+            {
+                return ProjectWireFrameWithMatrix(projectionMatrix, (Object3D)shape);
+            }
+        }
+
         List<(Vector2 begin, Vector2 end)> ProjectWireFrameWithMatrix(Matrix projectionMatrix, PrimitiveShape shape)
         {
             var wf = new List<(Vector2 begin, Vector2 end)>();
-            var vertixes = shape.vertixes;
-            var resMatrix = shape.transformationMatrix * projectionMatrix;
+            var vertices = shape.Vertices;
+            var resMatrix = shape.TransformationMatrix * projectionMatrix;
             foreach (var polygon in shape.polygons)
             {
                 for (int i = 0; i < polygon.Length; i++)
                 {
                     var i1 = (i + 1 == polygon.Length) ? 0 : i + 1;
-                    var v1 = new Vector4(vertixes[polygon[i]], 1);
-                    var v2 = new Vector4(vertixes[polygon[i1]], 1);
+                    var v1 = new Vector4(vertices[polygon[i]], 1);
+                    var v2 = new Vector4(vertices[polygon[i1]], 1);
                     var begin = Vector4.Transform(v1, resMatrix);
                     var end = Vector4.Transform(v2, resMatrix);
                     var vec2begin = new Vector2 { X = begin.X / begin.W, Y = -begin.Y / begin.W };
@@ -141,8 +190,8 @@ namespace Lab6_9
         List<(Vector2 begin, Vector2 end)> ProjectWireFrameWithMatrix(Matrix projectionMatrix, Object3D shape)
         {
             var wf = new List<(Vector2 begin, Vector2 end)>();
-            var vertixes = shape.vertixes;
-            var resMatrix = shape.transformationMatrix * projectionMatrix;
+            var vertixes = shape.Vertices;
+            var resMatrix = shape.TransformationMatrix * projectionMatrix;
             foreach (var polygon in shape.triangles)
             {
                 
@@ -240,6 +289,7 @@ namespace Lab6_9
 
                 }
             }
+            uiSystem.Update(gameTime);
             base.Update(gameTime);
         }
         
@@ -272,6 +322,16 @@ namespace Lab6_9
                 var t = ProjectWireFrameWithMatrix(camera, shapes[i]);
                 if (i == shapesIndex) {
                     DrawWireFrame(buffer, t, scale, center, Color.Green);
+
+                    if (currentTool != null)
+                    {
+                        var prevList = currentTool.GetPreview(shapes[i]);
+                        foreach (var shape in prevList)
+                        {
+                            var tt = ProjectWireFrameWithMatrix(camera,shape);
+                            DrawWireFrame(buffer, tt, scale, center, Color.Blue);
+                        }
+                    }
                 }
                 else
                 {
@@ -284,6 +344,15 @@ namespace Lab6_9
                 if (i == objectsIndex)
                 {
                     DrawWireFrame(buffer, t, scale, center, Color.Green);
+                    if (currentTool != null)
+                    {
+                        var prevList = currentTool.GetPreview(objects[i]);
+                        foreach (var shape in prevList)
+                        {
+                            var tt = ProjectWireFrameWithMatrix(camera,shape);
+                            DrawWireFrame(buffer, tt, scale, center, Color.Blue);
+                        }
+                    }
                 }
                 else
                 {
@@ -313,9 +382,56 @@ namespace Lab6_9
             _spriteBatch.Draw(screenTexture, new Vector2(0), Color.White);
             _spriteBatch.End();
 
-            
+            uiSystem.Draw(gameTime, this._spriteBatch);
 
             base.Draw(gameTime);
+        }
+
+        void ChooseTool(Tool tool)
+        {
+            toolUsePanel.RemoveChildren();
+            toolUsePanel.AddChild(new Paragraph(Anchor.TopCenter,70,tool.name));
+            tool.MakePanelLayout(toolUsePanel);
+            var bGrid = ElementHelper.MakeGrid(toolUsePanel,new Vector2(toolUsePanel.Size.X,30),2,1);
+            var buttonApply = new Button(Anchor.AutoLeft, size: new Vector2(toolUsePanel.Size.X/2-10, 30), text: "Apply") 
+            { OnPressed = (elem) => 
+                {
+                    ApplyTool();
+                }
+            };
+            var buttonCancel = new Button(Anchor.AutoLeft, size: new Vector2(toolUsePanel.Size.X/2-10, 30), text: "Cancel") 
+            { OnPressed = (elem) => 
+                {
+                    
+                }
+            };
+            bGrid[0, 0].AddChild(buttonApply);
+            bGrid[1, 0].AddChild(buttonCancel);
+            toolUsePanel.IsHidden = false;
+            
+            
+            currentTool = tool;
+        }
+
+        void UnchooseTool()
+        {
+            toolUsePanel.IsHidden = true;
+            currentTool = null;
+        }
+
+        void ApplyTool()
+        {
+            var tool = currentTool;
+            if (objectsIndex >= 0)
+            {
+                var shape = tool.TransformShape(objects[objectsIndex]);
+                objects[objectsIndex] = (Object3D)shape;
+            }
+            else if(shapesIndex >= 0)
+            {
+                var shape = tool.TransformShape(shapes[shapesIndex]);
+                shapes[shapesIndex] = (PrimitiveShape)shape;
+            }
         }
     }
 }
