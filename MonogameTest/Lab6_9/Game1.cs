@@ -64,8 +64,27 @@ namespace Lab6_9
             cubeObj.TransformationMatrix *= Matrix.CreateTranslation(3, 0, 0);
             objects.Add(cubeObj);
 
-            var cubeShape = PrimitiveShape.Cube();
-            shapes.Add(cubeShape);
+            // Куб
+            //var cubeShape = PrimitiveShape.Cube();
+            //shapes.Add(cubeShape);
+
+            // Тетраэдр
+            //var tetrahedronShape = PrimitiveShape.Tetrahedron();
+            //shapes.Add(tetrahedronShape);
+
+            // Октаэдр
+            //var octahedronShape = PrimitiveShape.Octahedron();
+            //shapes.Add(octahedronShape);
+
+            // Икосаэдр
+            var IcosahedronShape = PrimitiveShape.Icosahedron();
+            shapes.Add(IcosahedronShape);
+
+            // Додекаэдр
+            //var DodecahedronShape = PrimitiveShape.Dodecahedron();
+            //shapes.Add(DodecahedronShape);
+
+
 
 
             // TODO: Add your initialization logic here
