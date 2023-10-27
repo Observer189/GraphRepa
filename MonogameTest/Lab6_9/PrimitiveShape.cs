@@ -26,6 +26,7 @@ namespace Lab6_9
 
         public PrimitiveShape()
         {
+            transformationMatrix = Matrix.Identity;
         }
         public static PrimitiveShape Cube()
         {

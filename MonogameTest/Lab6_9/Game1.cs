@@ -49,8 +49,10 @@ namespace Lab6_9
             tools = new List<Tool>();
             tools.Add(new TransformTool());
             tools.Add(new RotateTool());
+            tools.Add(new RotateAroundTool());
             tools.Add(new ScaleTool());
-            tools.Add(new ScaleTool.LocalScaleTool());
+            tools.Add(new LocalScaleTool());
+            tools.Add(new MirrorTool());
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             _graphics.PreferredBackBufferWidth = ScreenWidth;
@@ -376,7 +378,7 @@ namespace Lab6_9
 
             }
             screenTexture.SetData(textureBuffer);
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.White);
 
             _spriteBatch.Begin();
             _spriteBatch.Draw(screenTexture, new Vector2(0), Color.White);
