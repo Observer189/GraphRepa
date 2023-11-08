@@ -1,0 +1,12 @@
+Выполнить в терминале в месте, где хочется установить VCPKG(должно быть много места)
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.bat
+
+Для установки нужных зависимостей: 
+./vcpkg install sfml
+./vcpkg install opengl
+./vcpkg install glew
+
+Для подключения пакетов в Visual Studio:
+./vcpkg integrate install
