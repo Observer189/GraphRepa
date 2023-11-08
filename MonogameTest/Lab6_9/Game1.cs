@@ -13,6 +13,7 @@ using MLEM.Ui;
 using MLEM.Ui.Elements;
 using MLEM.Ui.Style;
 using static MLEM.Graphics.StaticSpriteBatch;
+using System.IO;
 
 namespace Lab6_9
 {
@@ -80,6 +81,14 @@ namespace Lab6_9
 
             // Икосаэдр
             var IcosahedronShape = PrimitiveShape.Icosahedron();
+            //var teapot = Converter.DotObjToPrimitiveShape(File.ReadAllText("./teapot.obj")).ToObject3D();
+            //objects.Add(teapot);
+
+            var skull = Converter.DotObjToPrimitiveShape(File.ReadAllText("./Skull.obj")).ToObject3D();
+            skull.TransformationMatrix = Matrix.CreateScale(0.5f);
+            objects.Add(skull);
+
+
             shapes.Add(IcosahedronShape);
 
             // Додекаэдр
@@ -322,14 +331,14 @@ namespace Lab6_9
             float scale = CurrentCamera switch {
 
                 CurrentCamera.Axonometric => 50f,
-                CurrentCamera.Perspective => 200f,
+                CurrentCamera.Perspective => 400f,
                 _ => throw new NotImplementedException()
 
             };
             var camera = CurrentCamera switch
             {
                 CurrentCamera.Axonometric => GetAxonometric(AxonometricProjectionAngles.phi, AxonometricProjectionAngles.psi),
-                CurrentCamera.Perspective => Matrix.CreateRotationZ(-AxonometricProjectionAngles.psi) * Matrix.CreateRotationX(-AxonometricProjectionAngles.phi) * Matrix.CreateTranslation(0, 0, -5) * GetPerspective(1.3f),
+                CurrentCamera.Perspective => Matrix.CreateRotationZ(-AxonometricProjectionAngles.psi) * Matrix.CreateRotationX(-AxonometricProjectionAngles.phi) * Matrix.CreateTranslation(0, 0, -20) * GetPerspective(1.3f),
                 _ => throw new NotImplementedException()
 
             };

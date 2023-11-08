@@ -29,4 +29,7 @@
     <Message Text="Restoring dotnet tools" Importance="High" />
     <Exec Command="dotnet tool restore" />
   </Target>
+  <ItemGroup>
+    <None Include="$(ProjectDir)*.obj" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

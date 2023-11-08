@@ -119,5 +119,36 @@ namespace Lab6_9
             get => transformationMatrix;
             set => transformationMatrix = value;
         }
+        //Преобразует только треугольники и квадраты, потому что лень реализовывать алгоритм триангуляции
+        public Object3D ToObject3D()
+        {
+            var triangles = new List<(int, int, int)>();
+            foreach (var poly in polygons)
+            {
+
+                switch (poly.Length)
+                {
+                    case 0:
+                        break;
+                    case 1:
+                        triangles.Add((poly[0], poly[0], poly[0]));
+                        break;
+                    case 2:
+                        triangles.Add((poly[0], poly[1], poly[0]));
+                        break;
+                    case 3:
+                        triangles.Add((poly[0], poly[1], poly[2]));
+                        break;
+                    case 4:
+                        triangles.Add((poly[0], poly[1], poly[3]));
+                        triangles.Add((poly[1], poly[2], poly[3]));
+                        break;
+                    default:
+                        Console.Error.WriteLine($"Polygons with length of {poly.Length} not supported");
+                        break;
+                }
+            }
+            return new Object3D() { TransformationMatrix = TransformationMatrix, Vertices = vertices, triangles = triangles.ToArray() };
+        }
     }
 }
