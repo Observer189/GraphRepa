@@ -34,7 +34,7 @@ namespace Lab4
             }
             else
             {
-                for (int i = 0; i < edges.Count-1; i++)
+                /*for (int i = 0; i < edges.Count-1; i++)
                 {
                     var t1 = Utilities.CrossingCoordinates(vertices[vertices.Count - 1],
                         p, vertices[edges[i].Item1], vertices[edges[i].Item2]);
@@ -55,7 +55,7 @@ namespace Lab4
                             return;
                         }
                     }
-                }
+                }*/
                 
                 
                 
@@ -125,5 +125,98 @@ namespace Lab4
         }
 
         public Matrix2 LocalTransformations { get; set; } = Matrix2.Identity;
+
+        public List<DirPolygon> Triangulate()
+        {
+            var triangles = new List<DirPolygon>();
+            int[] vertIndices = new int[vertices.Count];
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                vertIndices[i] = i;
+            }
+            vertIndices = vertIndices.OrderBy((v) => vertices[v].X).ToArray();
+
+            bool[] upperChain = new bool[vertices.Count];
+
+            int it = 0;
+            while(edges[it].Item1 != vertIndices[0])
+            {
+                ++it;
+            }
+            //Помечаем все вершины верхней цепи
+            while (edges[it].Item2 != vertIndices[^1])
+            {
+                upperChain[edges[it].Item2] = true;
+                ++it;
+                if (it == vertices.Count) it = 0;
+            }
+            //Остальные автоматически принадлежат нижней
+           /* for (int i = 0; i < upperChain.Length; i++)
+            {
+                Console.WriteLine($"{i}) {upperChain[i]}");
+            }*/
+            Stack<int> stack = new Stack<int>();
+            stack.Push(vertIndices[0]);
+            stack.Push(vertIndices[1]);
+            for (int i = 2; i < vertIndices.Length-1; i++)
+            {
+                //Если в одной цепочке
+                if (upperChain[stack.Peek()] == upperChain[vertIndices[i]] || stack.Peek() == vertIndices[0])
+                {
+                    var top = stack.Pop();
+                    while (stack.Count > 0 && Utilities.PointOnTheRight(vertices[top],vertices[vertIndices[i]], vertices[stack.Peek()]) == upperChain[top])
+                    {
+                        var tr = new DirPolygon
+                        {
+                            vertices = new List<Vector2> { vertices[vertIndices[i]], vertices[top],vertices[stack.Peek()]},
+                            edges = new List<(int,int)> {(0,2),(2,1),(1,0)},
+                            LocalTransformations = this.LocalTransformations
+                        };
+                        triangles.Add(tr);
+                        top = stack.Pop();
+                    }
+                    stack.Push(top);
+                    stack.Push(vertIndices[i]);
+                }
+                else
+                {
+                    int vl = stack.Peek();
+                    int vt=-1;
+                    while (stack.Count > 0)
+                    {
+                        //if (stack.Count != 1)
+                        {
+                            if (vt != -1)
+                            {
+                                var tr = new DirPolygon
+                                {
+                                    vertices = new List<Vector2> { vertices[vertIndices[i]], vertices[vt],vertices[stack.Peek()]},
+                                    edges = new List<(int,int)> {(0,2),(2,1),(1,0)},
+                                    LocalTransformations = this.LocalTransformations
+                                };
+                                triangles.Add(tr);
+                            }
+                            vt = stack.Pop();
+                        }
+                    }
+                    stack.Push(vl);
+                    stack.Push(vertIndices[i]);
+                }
+            }
+
+            var last = stack.Pop();
+            while (stack.Count > 0)
+            {
+                var tr = new DirPolygon
+                {
+                    vertices = new List<Vector2> { vertices[vertIndices[^1]], vertices[last],vertices[stack.Peek()]},
+                    edges = new List<(int,int)> {(0,2),(2,1),(1,0)},
+                    LocalTransformations = this.LocalTransformations
+                };
+                triangles.Add(tr);
+                last = stack.Pop();
+            }
+            return triangles;
+        }
     }
 }

@@ -125,6 +125,21 @@ namespace Lab4
                 },
             };
             panel.AddChild(rotation90);
+            
+            var triangleButton = new Button(Anchor.AutoLeft, size: new Vector2(150, 60), text: "Triangulate")
+            {
+                OnPressed = (elem) =>
+                {
+                    if (chosenPolygon != -1)
+                    {
+                        var p = polygons[chosenPolygon];
+                        polygons.RemoveAt(chosenPolygon);
+                        var tris = p.Triangulate();
+                        polygons.AddRange(tris);
+                    }
+                },
+            };
+            panel.AddChild(triangleButton);
 
         }
 
