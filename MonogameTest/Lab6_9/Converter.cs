@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -81,6 +82,37 @@ namespace Lab6_9
             }
             return new PrimitiveShape() { polygons = faces.Select(x => x.ToArray()).ToArray(), Vertices = vertices.Select(t => new Vector3(t.X, t.Y, t.Z) / t.W).ToArray() };
             
+        }
+        public static string ObjectToText(Object3D obj)
+        {
+            var stringBuilder = new StringBuilder();
+            foreach (var item in obj.Vertices)
+            {
+                stringBuilder.AppendLine($"v {item.X.ToString(CultureInfo.InvariantCulture)} {item.Y.ToString(CultureInfo.InvariantCulture)} {item.Z.ToString(CultureInfo.InvariantCulture)}");
+            }
+            foreach (var item in obj.triangles)
+            {
+                stringBuilder.AppendLine($"f {item.v1 + 1} {item.v2 + 1} {item.v3 + 1}");
+            }
+            return stringBuilder.ToString();
+        }
+        public static string PrimitiveShapeToText(PrimitiveShape obj)
+        {
+            var stringBuilder = new StringBuilder();
+            foreach (var item in obj.Vertices)
+            {
+                stringBuilder.AppendLine($"v {item.X.ToString(CultureInfo.InvariantCulture)} {item.Y.ToString(CultureInfo.InvariantCulture)} {item.Z.ToString(CultureInfo.InvariantCulture)}");
+            }
+            foreach (var item in obj.polygons)
+            {
+                stringBuilder.Append("f");
+                foreach (var p in item)
+                {
+                    stringBuilder.Append($" {p+1}");
+                }
+                stringBuilder.AppendLine();
+            }
+            return stringBuilder.ToString();
         }
     }
 }
