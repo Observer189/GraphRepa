@@ -2,8 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using MLEM.Input;
 using MLEM.Ui;
 using MLEM.Ui.Elements;
+using MonoGame.Extended;
 
 namespace Lab6_9;
 
@@ -83,6 +87,16 @@ public class Tool
         }
 
         return true;
+    }
+
+    public virtual void Draw(SpriteBatch batch, Color[,] buffer, float scale, Vector2 center)
+    {
+        
+    }
+
+    public virtual void Update(InputHandler inputHandler, bool isMouseOverUI)
+    {
+        
     }
 }
 
@@ -378,7 +392,7 @@ public class RotateAroundTool:Tool
 public class LoadTool:Tool
 {
     private Dropdown dropdown;
-    private Object3D? curLoadShape;
+    private PrimitiveShape? curLoadShape;
     public LoadTool()
     {
         name = "Load";
@@ -408,7 +422,7 @@ public class LoadTool:Tool
         var fileName = $"{name}.obj";
         if (File.Exists(fileName))
         {
-            curLoadShape = Converter.DotObjToPrimitiveShape(File.ReadAllText(fileName)).ToObject3D();
+            curLoadShape = Converter.DotObjToPrimitiveShape(File.ReadAllText(fileName));
         }
         else
         {
@@ -430,7 +444,7 @@ public class LoadTool:Tool
     public override void Apply(Scene scene)
     {
         if(curLoadShape.HasValue)
-        scene.Objects.Add(curLoadShape.Value);
+        scene.Shapes.Add(curLoadShape.Value);
     }
 
     public override void Deselect(Scene scene)
@@ -492,6 +506,159 @@ public class SaveObjectTool:Tool
         }
         
         File.WriteAllText(fileTo, str);
+    }
+}
+
+public class RotationFigureTool:Tool
+{
+    private TextField textIterations;
+    private Dropdown dropdown;
+    private (float phi, float psi) cameraAxonometricProjLast;
+    private CurrentCamera cameraModeLast;
+    private List<Vector2> points;
+    private ButtonState prevLeftMouseButtonState;
+    public RotationFigureTool()
+    {
+        name = "Rotation Figure";
+        points = new List<Vector2>();
+    }
+
+    public override void Choose(Panel toolPanel, Scene scene)
+    {
+        LayoutCordTextField(toolPanel, "Iterations","0", out textIterations);
+        dropdown = new Dropdown(Anchor.AutoLeft,new Vector2(toolPanel.Size.X-10,20),"Y");
+        dropdown.AddElement("X", element => dropdown.Text.Text = "X");
+        dropdown.AddElement("Y", element => dropdown.Text.Text = "Y");
+        dropdown.AddElement("Z", element => dropdown.Text.Text = "Z");
+        toolPanel.AddChild(dropdown);
+        toolPanel.AddChild(new VerticalSpace(10));
+
+        cameraAxonometricProjLast = scene.AxonometricProjectionAngles;
+        cameraModeLast = scene.CurrentCamera;
+        scene.AxonometricProjectionAngles = (0, 0);
+        scene.CameraLock = true;
+    }
+
+    public override void Deselect(Scene scene)
+    {
+        scene.AxonometricProjectionAngles = cameraAxonometricProjLast;
+        scene.CurrentCamera = cameraModeLast;
+        scene.CameraLock = false;
+        points.Clear();
+    }
+
+    public override void Update(InputHandler inputHandler, bool isMouseOverUI)
+    {
+        if (inputHandler.IsPressed(MouseButton.Left) && !isMouseOverUI)
+        {
+            points.Add(inputHandler.MousePosition.ToVector2());
+        }
+    }
+
+    public override void Draw(SpriteBatch batch, Color[,] buffer, float scale, Vector2 center)
+    {
+        batch.Begin();
+        if (points.Count == 1)
+        {
+          batch.DrawPoint(points[0],Color.Chocolate, 4f);
+        }
+        else
+        {
+            for (int i = 1; i < points.Count; i++)
+            {
+                batch.DrawLine(points[i],points[i-1],Color.Chocolate);
+            }
+        }
+        batch.End();
+    }
+
+    public override List<IEditableShape> GetPreview(Scene scene)
+    {
+        var list = new List<IEditableShape>();
+        bool parseSuccess = true;
+        parseSuccess &= int.TryParse(textIterations.Text, out var its);
+        if (parseSuccess)
+        {
+            if (its > 1 && points.Count > 1)
+            {
+                byte axis = dropdown.Text.Text switch
+                {
+                    "X" => 0,
+                    "Y" => 1,
+                    "Z" => 2,
+                    _ => throw new NotImplementedException()
+                };
+                var shape = MakeRotationFigure(points, axis,its,scene.Center,scene.CameraScale);
+                list.Add(shape);
+            }
+        }
+
+
+        return list;
+    }
+
+    public override void Apply(Scene scene)
+    {
+        bool parseSuccess = true;
+        parseSuccess &= int.TryParse(textIterations.Text, out var its);
+        if (parseSuccess)
+        {
+            if (its > 1 && points.Count > 1)
+            {
+                byte axis = dropdown.Text.Text switch
+                {
+                    "X" => 0,
+                    "Y" => 1,
+                    "Z" => 2,
+                    _ => throw new NotImplementedException()
+                };
+                var shape = MakeRotationFigure(points, axis,its,scene.Center,scene.CameraScale);
+                scene.Shapes.Add(shape);
+            }
+        }
+    }
+
+    private PrimitiveShape MakeRotationFigure(List<Vector2> points, byte axis, int iterations, Vector2 offset, float scale)
+    {
+        float angle = (float)(360 / iterations * Math.PI / 180);
+        Matrix rotationMatrix = axis switch
+        {
+            0 => Matrix.CreateRotationX(angle),
+            1 => Matrix.CreateRotationY(angle),
+            2 => Matrix.CreateRotationZ(angle)
+        };
+        PrimitiveShape rotationShape = new PrimitiveShape();
+        rotationShape.Vertices = new Vector3[points.Count * iterations];
+        rotationShape.polygons = new int[iterations * (points.Count-1)][];
+        
+        for (int i = 0; i < points.Count; i++)
+        {
+            var pos = new Vector3(-(points[i] - offset) / scale, 0);
+            rotationShape.Vertices[i] = new Vector3(-pos.X,pos.Y,0);
+        }
+        int polygonIndex = 0;
+        for (int i = 1; i < iterations; i++)
+        {
+            rotationShape.Vertices[points.Count * i] = Vector3.Transform(rotationShape.Vertices[points.Count * (i-1)], rotationMatrix);
+            for (int j = 1; j < points.Count; j++)
+            {
+                rotationShape.Vertices[points.Count * i + j] = Vector3.Transform(rotationShape.Vertices[points.Count * (i-1) + j], rotationMatrix);
+                rotationShape.polygons[polygonIndex] = new[] {points.Count * (i-1) + (j-1), points.Count * i + (j-1), points.Count * i + j, points.Count * (i-1) + j };
+                ++polygonIndex;
+            }
+        }
+
+        for (int i = 1; i < points.Count; i++)
+        {
+            rotationShape.polygons[polygonIndex] = new[]
+                { (iterations - 1) * points.Count + (i - 1), (i - 1), i, (iterations - 1) * points.Count + i };
+            ++polygonIndex;
+        }
+        
+        
+        Console.WriteLine($"pol index = {polygonIndex}");
+        Console.WriteLine($"pol size = {rotationShape.polygons.Length}");
+        return rotationShape;
     }
 }
     

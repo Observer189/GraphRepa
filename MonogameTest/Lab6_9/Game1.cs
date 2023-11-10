@@ -54,6 +54,7 @@ namespace Lab6_9
             tools.Add(new MirrorTool());
             tools.Add(new LoadTool());
             tools.Add(new SaveObjectTool());
+            tools.Add(new RotationFigureTool());
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             _graphics.PreferredBackBufferWidth = ScreenWidth;
@@ -96,57 +97,12 @@ namespace Lab6_9
         }
 
         
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="buffer">Ожидается первая координата Y, вторая - X</param>
-        /// <param name="line"></param>
-        /// <param name="scale"></param>
-        /// <param name="offset"></param>
-        /// <param name="color"></param>
-        static void DrawLine(Color[,] buffer, (Vector2 begin, Vector2 end) line, float scale, Vector2 offset, Color color)
-        {
-            (var x1, var y1) = (line.begin * scale + offset).ToPoint();
-            (var x2, var y2) = (line.end * scale + offset).ToPoint();
-
-            int dx = Math.Abs(x2 - x1);
-            int dy = Math.Abs(y2 - y1);
-            int sx = (x1 < x2) ? 1 : -1;
-            int sy = (y1 < y2) ? 1 : -1;
-            int err = dx - dy;
-            var bufferlimX = buffer.GetLength(1);
-            var bufferlimY = buffer.GetLength(0);
-
-            while (true)
-            {
-                if (x1 >= 0 && x1 < bufferlimX && y1 >= 0 && y1 < bufferlimY)
-                    buffer[y1, x1] = color;
-                //Console.WriteLine($"{x1}, {y1}");
-                if (x1 == x2 && y1 == y2)
-                {
-                    break;
-                }
-
-                int e2 = 2 * err;
-                if (e2 > -dy)
-                {
-                    err -= dy;
-                    x1 += sx;
-                }
-                if (e2 < dx)
-                {
-                    err += dx;
-                    y1 += sy;
-                }
-            }
-        }
+        
         static void DrawWireFrame(Color[,] buffer, List<(Vector2 begin, Vector2 end)> lines, float scale, Vector2 offset, Color color)
         {
             foreach (var line in lines)
             {
-                DrawLine(buffer, line, scale, offset, color);
+                DrawUtilities.DrawLine(buffer, line, scale, offset, color);
             }
         }
 
@@ -212,7 +168,7 @@ namespace Lab6_9
             }
             return wf;
         }
-        (float phi, float psi) AxonometricProjectionAngles = (float.Pi / 4, float.Pi / 4);
+        
         //(float phi, float psi) AxonometricProjectionAngles = (0, 0);
         //(float phi, float psi) AxonometricProjectionAngles = (float.Pi / 4, 0);
 
@@ -254,22 +210,22 @@ namespace Lab6_9
             {
                 if (inputHandler.IsDown(Keys.W))
                 {
-                    AxonometricProjectionAngles.phi -= 0.1f;
+                    scene.AxonometricProjectionAngles.phi -= 0.1f;
                 }
 
                 if (inputHandler.IsDown(Keys.S))
                 {
-                    AxonometricProjectionAngles.phi += 0.1f;
+                    scene.AxonometricProjectionAngles.phi += 0.1f;
                 }
 
                 if (inputHandler.IsDown(Keys.D))
                 {
-                    AxonometricProjectionAngles.psi += 0.1f;
+                    scene.AxonometricProjectionAngles.psi += 0.1f;
                 }
 
                 if (inputHandler.IsDown(Keys.A))
                 {
-                    AxonometricProjectionAngles.psi -= 0.1f;
+                    scene.AxonometricProjectionAngles.psi -= 0.1f;
                 }
 
                 if (inputHandler.IsPressed(Keys.C))
@@ -298,7 +254,8 @@ namespace Lab6_9
 
                 }
             }
-            
+            currentTool?.Update(inputHandler,toolsPanel.Area.Contains(inputHandler.MousePosition.ToVector2())
+                                             || toolUsePanel.Area.Contains(inputHandler.MousePosition.ToVector2()));
             uiSystem.Update(gameTime);
             base.Update(gameTime);
         }
@@ -307,8 +264,15 @@ namespace Lab6_9
         {
             //Первая координата - Y, вторая - X. Так быстрее.
             var buffer = new Color[ScreenHeight, ScreenWidth];
-            Vector2 center = new Vector2(ScreenWidth / 2, ScreenHeight / 2);
-            float scale = scene.CurrentCamera switch {
+            scene.Center = new Vector2(ScreenWidth / 2, ScreenHeight / 2);
+            /*float scale = scene.CurrentCamera switch {
+
+                CurrentCamera.Axonometric => 50f,
+                CurrentCamera.Perspective => 400f,
+                _ => throw new NotImplementedException()
+
+            };*/
+            scene.CameraScale = scene.CurrentCamera switch {
 
                 CurrentCamera.Axonometric => 50f,
                 CurrentCamera.Perspective => 400f,
@@ -317,35 +281,24 @@ namespace Lab6_9
             };
             var camera = scene.CurrentCamera switch
             {
-                CurrentCamera.Axonometric => GetAxonometric(AxonometricProjectionAngles.phi, AxonometricProjectionAngles.psi),
-                CurrentCamera.Perspective => Matrix.CreateRotationZ(-AxonometricProjectionAngles.psi) * Matrix.CreateRotationX(-AxonometricProjectionAngles.phi) * Matrix.CreateTranslation(0, 0, -20) * GetPerspective(1.3f),
+                CurrentCamera.Axonometric => GetAxonometric(scene.AxonometricProjectionAngles.phi, scene.AxonometricProjectionAngles.psi),
+                CurrentCamera.Perspective => Matrix.CreateRotationZ(-scene.AxonometricProjectionAngles.psi) * Matrix.CreateRotationX(-scene.AxonometricProjectionAngles.phi) * Matrix.CreateTranslation(0, 0, -20) * GetPerspective(1.3f),
                 _ => throw new NotImplementedException()
 
             };
             //var camera = GetAxonometric(AxonometricProjectionAngles.phi, AxonometricProjectionAngles.psi);
             //var camera = Matrix.CreateRotationZ(-AxonometricProjectionAngles.psi) * Matrix.CreateRotationX(-AxonometricProjectionAngles.phi) * Matrix.CreateTranslation(0, 0, -5) * GetPerspective(1.3f);
             //TODO: Добавить перспективную матричную камеру
-
-
+            
             for (int i = 0; i < scene.Shapes.Count; i++)
             {
                 var t = ProjectWireFrameWithMatrix(camera, scene.Shapes[i]);
                 if (i == scene.ShapesIndex) {
-                    DrawWireFrame(buffer, t, scale, center, Color.Green);
-
-                    if (currentTool != null)
-                    {
-                        var prevList = currentTool.GetPreview(scene);
-                        foreach (var shape in prevList)
-                        {
-                            var tt = ProjectWireFrameWithMatrix(camera,shape);
-                            DrawWireFrame(buffer, tt, scale, center, Color.Blue);
-                        }
-                    }
+                    DrawWireFrame(buffer, t, scene.CameraScale, scene.Center, Color.Green);
                 }
                 else
                 {
-                    DrawWireFrame(buffer, t, scale, center, Color.Black);
+                    DrawWireFrame(buffer, t, scene.CameraScale, scene.Center, Color.Black);
                 }
             }
             for (int i = 0; i < scene.Objects.Count; i++)
@@ -353,27 +306,28 @@ namespace Lab6_9
                 var t = ProjectWireFrameWithMatrix(camera, scene.Objects[i]);
                 if (i == scene.ObjectsIndex)
                 {
-                    DrawWireFrame(buffer, t, scale, center, Color.Green);
-                    if (currentTool != null)
-                    {
-                        var prevList = currentTool.GetPreview(scene);
-                        foreach (var shape in prevList)
-                        {
-                            var tt = ProjectWireFrameWithMatrix(camera,shape);
-                            DrawWireFrame(buffer, tt, scale, center, Color.Blue);
-                        }
-                    }
+                    DrawWireFrame(buffer, t, scene.CameraScale, scene.Center, Color.Green);
                 }
                 else
                 {
-                    DrawWireFrame(buffer, t, scale, center, Color.Black);
+                    DrawWireFrame(buffer, t, scene.CameraScale, scene.Center, Color.Black);
 
                 }
             }
+            
+            if (currentTool != null)
+            {
+                var prevList = currentTool.GetPreview(scene);
+                foreach (var shape in prevList)
+                {
+                    var tt = ProjectWireFrameWithMatrix(camera,shape);
+                    DrawWireFrame(buffer, tt,scene.CameraScale, scene.Center, Color.Blue);
+                }
+            }
 
-
+            
             //Линия координат
-            DrawWireFrame(buffer, ProjectWireFrameWithMatrix(camera, OXYZLines), scale, center, Color.Blue);
+            DrawWireFrame(buffer, ProjectWireFrameWithMatrix(camera, OXYZLines), scene.CameraScale,scene.Center, Color.Blue);
             
             
             var textureBuffer = new Color[ScreenHeight * ScreenWidth];
@@ -388,6 +342,7 @@ namespace Lab6_9
             screenTexture.SetData(textureBuffer);
             GraphicsDevice.Clear(Color.White);
 
+            currentTool?.Draw(_spriteBatch,buffer,scene.CameraScale,scene.Center);
             _spriteBatch.Begin();
             _spriteBatch.Draw(screenTexture, new Vector2(0), Color.White);
             _spriteBatch.End();

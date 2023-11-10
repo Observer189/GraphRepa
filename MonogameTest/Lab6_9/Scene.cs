@@ -9,11 +9,14 @@ public class Scene
     List<Object3D> objects = new List<Object3D>() {  };
     List<PrimitiveShape> shapes = new List<PrimitiveShape>() { };
     CurrentCamera currentCamera = CurrentCamera.Axonometric;
+    public (float phi, float psi) AxonometricProjectionAngles = (float.Pi / 4, float.Pi / 4);
     //Индекс текущего объекта, -1 если никакой объект не выбран
     int objectsIndex = -1;
     int shapesIndex = -1;
     private bool cameraLock = false;
-
+    private float cameraScale;
+    private Vector2 center;
+ 
     public bool CameraLock
     {
         get => cameraLock;
@@ -41,12 +44,24 @@ public class Scene
         set => shapesIndex = value;
     }
 
+    public float CameraScale
+    {
+        get => cameraScale;
+        set => cameraScale = value;
+    }
+
+    public Vector2 Center
+    {
+        get => center;
+        set => center = value;
+    }
+
     public void Init()
     {
         //Добавлять объекты и их сдвигать можно тут
         var cubeObj = Object3D.Cube();
         cubeObj.TransformationMatrix *= Matrix.CreateTranslation(3, 0, 0);
-        objects.Add(cubeObj);
+        //objects.Add(cubeObj);
 
         // Куб
         //var cubeShape = PrimitiveShape.Cube();
@@ -63,14 +78,14 @@ public class Scene
         // Икосаэдр
         var IcosahedronShape = PrimitiveShape.Icosahedron();
         var teapot = Converter.DotObjToPrimitiveShape(File.ReadAllText("./teapot.obj")).ToObject3D();
-        objects.Add(teapot);
+        //objects.Add(teapot);
 
         //var skull = Converter.DotObjToPrimitiveShape(File.ReadAllText("./Skull.obj")).ToObject3D();
         //skull.TransformationMatrix = Matrix.CreateScale(0.5f);
         //objects.Add(skull);
 
 
-        shapes.Add(IcosahedronShape);
+        //shapes.Add(IcosahedronShape);
 
         // Додекаэдр
         //var DodecahedronShape = PrimitiveShape.Dodecahedron();
@@ -103,4 +118,5 @@ public class Scene
             Shapes[ShapesIndex] = (PrimitiveShape)shape;
         }
     }
+    
 }
