@@ -29,13 +29,10 @@ namespace Lab6_9
         private SpriteBatch _spriteBatch;
         int ScreenWidth = 1280;
         int ScreenHeight = 720;
-        List<Object3D> objects = new List<Object3D>() {  };
-        List<PrimitiveShape> shapes = new List<PrimitiveShape>() { };
+
+        Scene scene;
+
         PrimitiveShape OXYZLines = PrimitiveShape.OXYZLines(4);
-        CurrentCamera CurrentCamera = CurrentCamera.Axonometric;
-        //Индекс текущего объекта, -1 если никакой объект не выбран
-        int objectsIndex = -1;
-        int shapesIndex = -1;
 
         public UiSystem uiSystem;
         public SpriteFont font;
@@ -55,50 +52,18 @@ namespace Lab6_9
             tools.Add(new ScaleTool());
             tools.Add(new LocalScaleTool());
             tools.Add(new MirrorTool());
+            tools.Add(new LoadTool());
+            tools.Add(new SaveObjectTool());
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             _graphics.PreferredBackBufferWidth = ScreenWidth;
             _graphics.PreferredBackBufferHeight = ScreenHeight;
+            scene = new Scene();
         }
         Texture2D screenTexture = null;
         protected override void Initialize()
         {
-            //Добавлять объекты и их сдвигать можно тут
-            var cubeObj = Object3D.Cube();
-            cubeObj.TransformationMatrix *= Matrix.CreateTranslation(3, 0, 0);
-            objects.Add(cubeObj);
-
-            // Куб
-            //var cubeShape = PrimitiveShape.Cube();
-            //shapes.Add(cubeShape);
-
-            // Тетраэдр
-            //var tetrahedronShape = PrimitiveShape.Tetrahedron();
-            //shapes.Add(tetrahedronShape);
-
-            // Октаэдр
-            //var octahedronShape = PrimitiveShape.Octahedron();
-            //shapes.Add(octahedronShape);
-
-            // Икосаэдр
-            var IcosahedronShape = PrimitiveShape.Icosahedron();
-            var teapot = Converter.DotObjToPrimitiveShape(File.ReadAllText("./teapot.obj")).ToObject3D();
-            objects.Add(teapot);
-
-            //var skull = Converter.DotObjToPrimitiveShape(File.ReadAllText("./Skull.obj")).ToObject3D();
-            //skull.TransformationMatrix = Matrix.CreateScale(0.5f);
-            //objects.Add(skull);
-
-
-            shapes.Add(IcosahedronShape);
-
-            // Додекаэдр
-            //var DodecahedronShape = PrimitiveShape.Dodecahedron();
-            //shapes.Add(DodecahedronShape);
-
-
-
-
+            scene.Init();
             // TODO: Add your initialization logic here
             screenTexture = new Texture2D(GraphicsDevice, ScreenWidth, ScreenHeight);
             inputHandler = new InputHandler(this);
@@ -118,6 +83,7 @@ namespace Lab6_9
                 var button = new Button(Anchor.AutoLeft, size: new Vector2(150, 30), text: tools[i].name) 
                 { OnPressed = (elem) => 
                     {
+                        UnchooseTool();
                         ChooseTool(tool);
                     }
                 };
@@ -284,43 +250,51 @@ namespace Lab6_9
                 Exit();
 
             //var k = Keyboard.GetState();
-            if (inputHandler.IsDown(Keys.W))
+            if (!scene.CameraLock)
             {
-                AxonometricProjectionAngles.phi -= 0.1f;
-            }
-            if (inputHandler.IsDown(Keys.S))
-            {
-                AxonometricProjectionAngles.phi += 0.1f;
-            }
-            if (inputHandler.IsDown(Keys.D))
-            {
-                AxonometricProjectionAngles.psi += 0.1f;
-            }
-            if (inputHandler.IsDown(Keys.A))
-            {
-                AxonometricProjectionAngles.psi -= 0.1f;
-            }
-            if (inputHandler.IsPressed(Keys.C))
-            {
-                CurrentCamera = CurrentCamera switch
+                if (inputHandler.IsDown(Keys.W))
                 {
-                    CurrentCamera.Axonometric => CurrentCamera.Perspective,
-                    CurrentCamera.Perspective => CurrentCamera.Axonometric,
-                    _ => throw new NotImplementedException()
-                };
+                    AxonometricProjectionAngles.phi -= 0.1f;
+                }
+
+                if (inputHandler.IsDown(Keys.S))
+                {
+                    AxonometricProjectionAngles.phi += 0.1f;
+                }
+
+                if (inputHandler.IsDown(Keys.D))
+                {
+                    AxonometricProjectionAngles.psi += 0.1f;
+                }
+
+                if (inputHandler.IsDown(Keys.A))
+                {
+                    AxonometricProjectionAngles.psi -= 0.1f;
+                }
+
+                if (inputHandler.IsPressed(Keys.C))
+                {
+                    scene.CurrentCamera = scene.CurrentCamera switch
+                    {
+                        CurrentCamera.Axonometric => CurrentCamera.Perspective,
+                        CurrentCamera.Perspective => CurrentCamera.Axonometric,
+                        _ => throw new NotImplementedException()
+                    };
+                }
             }
+
             if (inputHandler.IsPressed(Keys.P))
             {
                 SaveCurrent("./saved.obj");
             }
             if (inputHandler.IsPressed(Keys.Tab))
             {
-                if (shapesIndex == -1)
+                if (scene.ShapesIndex == -1)
                 {
-                    if (objectsIndex < objects.Count - 1) { objectsIndex++; } else { objectsIndex = -1; shapesIndex++; }
+                    if (scene.ObjectsIndex < scene.Objects.Count - 1) { scene.ObjectsIndex++; } else { scene.ObjectsIndex = -1; scene.ShapesIndex++; }
                 }
-                else if(objectsIndex  == -1) {
-                    if (shapesIndex < shapes.Count - 1) { shapesIndex++; } else { shapesIndex = -1; objectsIndex = -1; }
+                else if(scene.ObjectsIndex  == -1) {
+                    if (scene.ShapesIndex < scene.Shapes.Count - 1) { scene.ShapesIndex++; } else { scene.ShapesIndex = -1; scene.ObjectsIndex = -1; }
 
                 }
             }
@@ -334,14 +308,14 @@ namespace Lab6_9
             //Первая координата - Y, вторая - X. Так быстрее.
             var buffer = new Color[ScreenHeight, ScreenWidth];
             Vector2 center = new Vector2(ScreenWidth / 2, ScreenHeight / 2);
-            float scale = CurrentCamera switch {
+            float scale = scene.CurrentCamera switch {
 
                 CurrentCamera.Axonometric => 50f,
                 CurrentCamera.Perspective => 400f,
                 _ => throw new NotImplementedException()
 
             };
-            var camera = CurrentCamera switch
+            var camera = scene.CurrentCamera switch
             {
                 CurrentCamera.Axonometric => GetAxonometric(AxonometricProjectionAngles.phi, AxonometricProjectionAngles.psi),
                 CurrentCamera.Perspective => Matrix.CreateRotationZ(-AxonometricProjectionAngles.psi) * Matrix.CreateRotationX(-AxonometricProjectionAngles.phi) * Matrix.CreateTranslation(0, 0, -20) * GetPerspective(1.3f),
@@ -353,15 +327,15 @@ namespace Lab6_9
             //TODO: Добавить перспективную матричную камеру
 
 
-            for (int i = 0; i < shapes.Count; i++)
+            for (int i = 0; i < scene.Shapes.Count; i++)
             {
-                var t = ProjectWireFrameWithMatrix(camera, shapes[i]);
-                if (i == shapesIndex) {
+                var t = ProjectWireFrameWithMatrix(camera, scene.Shapes[i]);
+                if (i == scene.ShapesIndex) {
                     DrawWireFrame(buffer, t, scale, center, Color.Green);
 
                     if (currentTool != null)
                     {
-                        var prevList = currentTool.GetPreview(shapes[i]);
+                        var prevList = currentTool.GetPreview(scene.Shapes[i]);
                         foreach (var shape in prevList)
                         {
                             var tt = ProjectWireFrameWithMatrix(camera,shape);
@@ -374,15 +348,15 @@ namespace Lab6_9
                     DrawWireFrame(buffer, t, scale, center, Color.Black);
                 }
             }
-            for (int i = 0; i < objects.Count; i++)
+            for (int i = 0; i < scene.Objects.Count; i++)
             {
-                var t = ProjectWireFrameWithMatrix(camera, objects[i]);
-                if (i == objectsIndex)
+                var t = ProjectWireFrameWithMatrix(camera, scene.Objects[i]);
+                if (i == scene.ObjectsIndex)
                 {
                     DrawWireFrame(buffer, t, scale, center, Color.Green);
                     if (currentTool != null)
                     {
-                        var prevList = currentTool.GetPreview(objects[i]);
+                        var prevList = currentTool.GetPreview(scene.Objects[i]);
                         foreach (var shape in prevList)
                         {
                             var tt = ProjectWireFrameWithMatrix(camera,shape);
@@ -427,7 +401,7 @@ namespace Lab6_9
         {
             toolUsePanel.RemoveChildren();
             toolUsePanel.AddChild(new Paragraph(Anchor.TopCenter,70,tool.name));
-            tool.MakePanelLayout(toolUsePanel);
+            tool.Choose(toolUsePanel,scene);
             var bGrid = ElementHelper.MakeGrid(toolUsePanel,new Vector2(toolUsePanel.Size.X,30),2,1);
             var buttonApply = new Button(Anchor.AutoLeft, size: new Vector2(toolUsePanel.Size.X/2-10, 30), text: "Apply") 
             { OnPressed = (elem) => 
@@ -438,7 +412,7 @@ namespace Lab6_9
             var buttonCancel = new Button(Anchor.AutoLeft, size: new Vector2(toolUsePanel.Size.X/2-10, 30), text: "Cancel") 
             { OnPressed = (elem) => 
                 {
-                    
+                    UnchooseTool();
                 }
             };
             bGrid[0, 0].AddChild(buttonApply);
@@ -451,34 +425,36 @@ namespace Lab6_9
 
         void UnchooseTool()
         {
+            currentTool?.Deselect(scene);
             toolUsePanel.IsHidden = true;
             currentTool = null;
         }
 
         void ApplyTool()
         {
-            var tool = currentTool;
-            if (objectsIndex >= 0)
+            currentTool.Apply(scene);
+            /*var tool = currentTool;
+            if (scene.ObjectsIndex >= 0)
             {
-                var shape = tool.TransformShape(objects[objectsIndex]);
-                objects[objectsIndex] = (Object3D)shape;
+                var shape = tool.TransformShape(scene.Objects[scene.ObjectsIndex]);
+                scene.Objects[scene.ObjectsIndex] = (Object3D)shape;
             }
-            else if(shapesIndex >= 0)
+            else if(scene.ShapesIndex >= 0)
             {
-                var shape = tool.TransformShape(shapes[shapesIndex]);
-                shapes[shapesIndex] = (PrimitiveShape)shape;
-            }
+                var shape = tool.TransformShape(scene.Shapes[scene.ShapesIndex]);
+                scene.Shapes[scene.ShapesIndex] = (PrimitiveShape)shape;
+            }*/
         }
         void SaveCurrent(string fileTo)
         {
             var str = "";
-            if (objectsIndex >= 0)
+            if (scene.ObjectsIndex >= 0)
             {
-                str = Converter.ObjectToText(objects[objectsIndex]);
+                str = Converter.ObjectToText(scene.Objects[scene.ObjectsIndex]);
             }
-            else if (shapesIndex >= 0)
+            else if (scene.ShapesIndex >= 0)
             {
-                str = Converter.PrimitiveShapeToText(shapes[shapesIndex]);
+                str = Converter.PrimitiveShapeToText(scene.Shapes[scene.ShapesIndex]);
             }
             File.WriteAllText(fileTo, str);
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Microsoft.Xna.Framework;
 using MLEM.Ui;
 using MLEM.Ui.Elements;
@@ -11,14 +12,28 @@ public class Tool
     public string name;
     
 
-    public virtual void MakePanelLayout(Panel toolPanel)
+    public virtual void Choose(Panel toolPanel, Scene scene)
     {
         
     }
 
-    public virtual IEditableShape TransformShape(IEditableShape shape)
+    protected virtual IEditableShape TransformShape(IEditableShape shape)
     {
         return null;
+    }
+
+    public virtual void Apply(Scene scene)
+    {
+        var shape = scene.GetChosenObject();
+        if (shape != null)
+        {
+            scene.TransformChosenObject(TransformShape(shape));
+        }
+    }
+
+    public virtual void Deselect(Scene scene)
+    {
+        
     }
 
     public static void LayoutCordTextField(Panel panel,string fieldName, string defaultText, out TextField tf)
@@ -77,12 +92,12 @@ public class TransformTool:Tool
         name = "Move";
     }
 
-    public override void MakePanelLayout(Panel toolPanel)
+    public override void Choose(Panel toolPanel, Scene scene)
     {
         LayoutXYZTextFields(toolPanel,"0",out textX,out textY, out textZ);
     }
 
-    public override IEditableShape TransformShape(IEditableShape shape)
+    protected override IEditableShape TransformShape(IEditableShape shape)
     {
         bool parseSuccess = true;
         parseSuccess &= float.TryParse(textX.Text, out var xTr);
@@ -105,12 +120,12 @@ public class RotateTool:Tool
         name = "Rotate";
     }
     
-    public override void MakePanelLayout(Panel toolPanel)
+    public override void Choose(Panel toolPanel, Scene scene)
     {
         LayoutXYZTextFields(toolPanel,"0",out textX,out textY, out textZ);
     }
     
-    public override IEditableShape TransformShape(IEditableShape shape)
+    protected override IEditableShape TransformShape(IEditableShape shape)
     {
         bool parseSuccess = true;
         parseSuccess &= float.TryParse(textX.Text, out var xTr);
@@ -155,12 +170,12 @@ public class ScaleTool : Tool
         name = "Scale";
     }
 
-    public override void MakePanelLayout(Panel toolPanel)
+    public override void Choose(Panel toolPanel, Scene scene)
     {
         LayoutXYZTextFields(toolPanel, "1", out textX, out textY, out textZ);
     }
 
-    public override IEditableShape TransformShape(IEditableShape shape)
+    protected override IEditableShape TransformShape(IEditableShape shape)
     {
         bool parseSuccess = true;
         parseSuccess &= float.TryParse(textX.Text, out var xTr);
@@ -199,12 +214,12 @@ public class LocalScaleTool:Tool
             name = "Local Scale";
         }
     
-        public override void MakePanelLayout(Panel toolPanel)
+        public override void Choose(Panel toolPanel, Scene scene)
         {
             LayoutXYZTextFields(toolPanel,"1",out textX,out textY, out textZ);
         }
     
-        public override IEditableShape TransformShape(IEditableShape shape)
+        protected override IEditableShape TransformShape(IEditableShape shape)
         {
             bool parseSuccess = true;
             parseSuccess &= float.TryParse(textX.Text, out var xTr);
@@ -228,7 +243,7 @@ public class LocalScaleTool:Tool
             name = "Mirror";
         }
         
-        public override void MakePanelLayout(Panel toolPanel)
+        public override void Choose(Panel toolPanel, Scene scene)
         {
             dropdown = new Dropdown(Anchor.AutoLeft,new Vector2(toolPanel.Size.X-10,20),"XY");
             dropdown.AddElement("XY", element => dropdown.Text.Text = "XY");
@@ -238,7 +253,7 @@ public class LocalScaleTool:Tool
             toolPanel.AddChild(new VerticalSpace(10));
         }
 
-        public override IEditableShape TransformShape(IEditableShape shape)
+        protected override IEditableShape TransformShape(IEditableShape shape)
         {
             Matrix tr;
             if (dropdown.Text.Text == "XY")
@@ -275,7 +290,7 @@ public class RotateAroundTool:Tool
         name = "Rotate Around";
     }
 
-    public override void MakePanelLayout(Panel toolPanel)
+    public override void Choose(Panel toolPanel, Scene scene)
     {
         toolPanel.AddChild(new Paragraph(Anchor.AutoLeft, toolPanel.Size.X, "Point", true));
         LayoutXYZTextFields(toolPanel,"0",out pX,out pY,out pZ);
@@ -319,7 +334,7 @@ public class RotateAroundTool:Tool
         return prevList;
     }
 
-    public override IEditableShape TransformShape(IEditableShape shape)
+    protected override IEditableShape TransformShape(IEditableShape shape)
     {
         bool parseSuccess = true;
         parseSuccess &= float.TryParse(pX.Text, out var x);
@@ -329,7 +344,7 @@ public class RotateAroundTool:Tool
         parseSuccess &= float.TryParse(dirY.Text, out var dY);
         parseSuccess &= float.TryParse(dirZ.Text, out var dZ);
         parseSuccess &= float.TryParse(trAngle.Text, out var angle);
-
+        
         if (parseSuccess)
         {
             var nv= Vector3.Normalize(new Vector3(dX, dY, dZ));
@@ -349,6 +364,126 @@ public class RotateAroundTool:Tool
         }
 
         return shape;
+    }
+}
+
+public class LoadTool:Tool
+{
+    private Dropdown dropdown;
+    private Object3D? curLoadShape;
+    public LoadTool()
+    {
+        name = "Load";
+    }
+        
+    public override void Choose(Panel toolPanel, Scene scene)
+    {
+        dropdown = new Dropdown(Anchor.AutoLeft,new Vector2(toolPanel.Size.X-10,20),"Obj to load");
+        var files = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.obj");
+        
+        for (int i = 0; i < files.Length; i++)
+        {
+            var name = Path.GetFileNameWithoutExtension(files[i]);
+            dropdown.AddElement(name, element =>
+            {
+                dropdown.Text.Text = name;
+                OnSelectElem(name);
+            });
+        }
+        
+        toolPanel.AddChild(dropdown);
+        toolPanel.AddChild(new VerticalSpace(10));
+    }
+
+    protected void OnSelectElem(string name)
+    {
+        var fileName = $"{name}.obj";
+        if (File.Exists(fileName))
+        {
+            curLoadShape = Converter.DotObjToPrimitiveShape(File.ReadAllText(fileName)).ToObject3D();
+        }
+        else
+        {
+            curLoadShape = null;
+        }
+    }
+
+    public override List<IEditableShape> GetPreview(IEditableShape shape)
+    {
+        var list = new List<IEditableShape>();
+        if (curLoadShape != null)
+        {
+            list.Add(curLoadShape);
+        }
+
+        return list;
+    }
+
+    public override void Apply(Scene scene)
+    {
+        if(curLoadShape.HasValue)
+        scene.Objects.Add(curLoadShape.Value);
+    }
+
+    public override void Deselect(Scene scene)
+    {
+        curLoadShape = null;
+    }
+}
+
+public class SaveObjectTool:Tool
+{
+    private TextField textName;
+    public SaveObjectTool()
+    {
+        name = "Save object";
+    }
+
+    public override void Choose(Panel toolPanel, Scene scene)
+    {
+        TextField text;
+        
+        var gridX = ElementHelper.MakeGrid(toolPanel,new Vector2(toolPanel.Size.X,20),2,1);
+        var parX = new Paragraph(Anchor.AutoLeft, 50,"Save as",true);
+        text = new TextField(Anchor.AutoLeft,new Vector2(60,20));
+        text.SetText("object");
+        gridX[0, 0].AddChild(parX);
+        gridX[1, 0].AddChild(text);
+
+        textName = text;
+    }
+
+    public override void Apply(Scene scene)
+    {
+        bool parseSuccess = true;
+        parseSuccess &= textName.Text.Length > 0;
+        if (!parseSuccess) return;
+
+        var shape = scene.GetChosenObject();
+        if (shape != null)
+        {
+            SaveObject($"{textName.Text}.obj",shape);
+        }
+    }
+
+    public override List<IEditableShape> GetPreview(IEditableShape shape)
+    {
+        return new List<IEditableShape>();
+    }
+
+    public static void SaveObject(string fileTo, IEditableShape objToSave)
+    {
+        var str = "";
+        if (objToSave is Object3D object3D)
+        {
+            str = Converter.ObjectToText(object3D);
+        }
+        else if (objToSave is PrimitiveShape shape)
+        {
+            str = Converter.PrimitiveShapeToText(shape);
+        }
+        
+        File.WriteAllText(fileTo, str);
     }
 }
     
