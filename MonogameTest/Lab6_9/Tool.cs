@@ -50,13 +50,17 @@ public class Tool
         tf = text;
     }
 
-    public virtual List<IEditableShape> GetPreview(IEditableShape shape)
+    public virtual List<IEditableShape> GetPreview(Scene scene)
     {
         var prevList = new List<IEditableShape>();
 
-        var trs = TransformShape(shape);
-        
-        prevList.Add(trs);
+        var curShape = scene.GetChosenObject();
+        if (curShape != null)
+        {
+            var trs = TransformShape(scene.GetChosenObject());
+
+            prevList.Add(trs);
+        }
 
         return prevList;
     }
@@ -300,7 +304,7 @@ public class RotateAroundTool:Tool
         LayoutCordTextField(toolPanel,"angle:","0", out trAngle);
     }
 
-    public override List<IEditableShape> GetPreview(IEditableShape shape)
+    public override List<IEditableShape> GetPreview(Scene scene)
     {
         var prevList = new List<IEditableShape>();
 
@@ -314,20 +318,24 @@ public class RotateAroundTool:Tool
 
         if (parseSuccess)
         {
-            var v1 = new Vector3(x, y, z);
-            var v2 = new Vector3(x+dX, y+dY, z+dZ);
-            var line = new PrimitiveShape();
-            line.Vertices = new[] { v1, v2 };
-            line.polygons = new[] { new []{0,1}};
-            var center = (v1 + v2) / 2;
-            line.TransformationMatrix *= Matrix.CreateTranslation(-center);
-            line.TransformationMatrix *= Matrix.CreateScale(1000);
-            line.TransformationMatrix *= Matrix.CreateTranslation(center);
-            prevList.Add(line);
-            
-            var trs = TransformShape(shape);
-        
-            prevList.Add(trs);
+            var shape = scene.GetChosenObject();
+            if (shape != null)
+            {
+                var v1 = new Vector3(x, y, z);
+                var v2 = new Vector3(x + dX, y + dY, z + dZ);
+                var line = new PrimitiveShape();
+                line.Vertices = new[] { v1, v2 };
+                line.polygons = new[] { new[] { 0, 1 } };
+                var center = (v1 + v2) / 2;
+                line.TransformationMatrix *= Matrix.CreateTranslation(-center);
+                line.TransformationMatrix *= Matrix.CreateScale(1000);
+                line.TransformationMatrix *= Matrix.CreateTranslation(center);
+                prevList.Add(line);
+
+                var trs = TransformShape(shape);
+
+                prevList.Add(trs);
+            }
         }
 
 
@@ -408,7 +416,7 @@ public class LoadTool:Tool
         }
     }
 
-    public override List<IEditableShape> GetPreview(IEditableShape shape)
+    public override List<IEditableShape> GetPreview(Scene scene)
     {
         var list = new List<IEditableShape>();
         if (curLoadShape != null)
@@ -466,7 +474,7 @@ public class SaveObjectTool:Tool
         }
     }
 
-    public override List<IEditableShape> GetPreview(IEditableShape shape)
+    public override List<IEditableShape> GetPreview(Scene scene)
     {
         return new List<IEditableShape>();
     }

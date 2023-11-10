@@ -335,7 +335,7 @@ namespace Lab6_9
 
                     if (currentTool != null)
                     {
-                        var prevList = currentTool.GetPreview(scene.Shapes[i]);
+                        var prevList = currentTool.GetPreview(scene);
                         foreach (var shape in prevList)
                         {
                             var tt = ProjectWireFrameWithMatrix(camera,shape);
@@ -356,7 +356,7 @@ namespace Lab6_9
                     DrawWireFrame(buffer, t, scale, center, Color.Green);
                     if (currentTool != null)
                     {
-                        var prevList = currentTool.GetPreview(scene.Objects[i]);
+                        var prevList = currentTool.GetPreview(scene);
                         foreach (var shape in prevList)
                         {
                             var tt = ProjectWireFrameWithMatrix(camera,shape);
