@@ -108,7 +108,7 @@ namespace Lab6_9
             throw new NotImplementedException();
         }
 
-        public static List<Vector3> BuildSurfaceSegment(Func<float, float, float> function, float x0, float x1, float y0, float y1, int xSteps, int ySteps)
+        static List<Vector3> BuildSurfaceSegment(Func<float, float, float> function, float x0, float x1, float y0, float y1, int xSteps, int ySteps)
         {
             List<Vector3> surfacePoints = new List<Vector3>();
 
@@ -130,7 +130,7 @@ namespace Lab6_9
             return surfacePoints;
         }
 
-        public static int[][] BuildSurfaceIndices(int xSteps, int ySteps)
+        static int[][] BuildSurfaceIndices(int xSteps, int ySteps)
         {
             int[][] indices = new int[xSteps * ySteps][];
 
@@ -143,8 +143,7 @@ namespace Lab6_9
                     // Соединение вершин для квадрата
                     indices[i * ySteps + j] = new int[]
                     {
-                currentIndex, currentIndex + 1, currentIndex + ySteps + 2,
-                currentIndex, currentIndex + ySteps + 2, currentIndex + ySteps + 1
+                        currentIndex, currentIndex + 1, currentIndex + ySteps + 2, currentIndex + ySteps + 1
                     };
                 }
             }
