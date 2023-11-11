@@ -15,6 +15,8 @@ using MLEM.Ui.Style;
 using static MLEM.Graphics.StaticSpriteBatch;
 using System.IO;
 using MonoGame.Extended.Collections;
+using MonoGame.Extended;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Lab6_9
 {
@@ -259,7 +261,9 @@ namespace Lab6_9
             uiSystem.Update(gameTime);
             base.Update(gameTime);
         }
-        
+
+
+
         protected override void Draw(GameTime gameTime)
         {
             //Первая координата - Y, вторая - X. Так быстрее.

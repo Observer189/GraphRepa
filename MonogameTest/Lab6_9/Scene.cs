@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Microsoft.Xna.Framework;
 
@@ -76,8 +77,8 @@ public class Scene
         //shapes.Add(octahedronShape);
 
         // Икосаэдр
-        var IcosahedronShape = PrimitiveShape.Icosahedron();
-        var teapot = Converter.DotObjToPrimitiveShape(File.ReadAllText("./teapot.obj")).ToObject3D();
+     //   var IcosahedronShape = PrimitiveShape.Icosahedron();
+     //   var teapot = Converter.DotObjToPrimitiveShape(File.ReadAllText("./teapot.obj")).ToObject3D();
         //objects.Add(teapot);
 
         //var skull = Converter.DotObjToPrimitiveShape(File.ReadAllText("./Skull.obj")).ToObject3D();
@@ -90,6 +91,40 @@ public class Scene
         // Додекаэдр
         //var DodecahedronShape = PrimitiveShape.Dodecahedron();
         //shapes.Add(DodecahedronShape);
+
+        // Модель, построенная с помощью графика
+
+        float x0 = -5;
+        float x1 = 5;
+        float y0 = -5;
+        float y1 = 5;
+        int xSteps = 50;
+        int ySteps = 50;
+        //Func<float, float, float> myFunction = (x, y) => x * x + y * y;
+        //Func<float, float, float> myFunction = (x, y) => x * x - y * y;
+        //Func<float, float, float> myFunction = (x, y) => (float)(Math.Sin(x) + Math.Cos(y)); // Ландшафтная функция
+        Func<float, float, float> myFunction = (x, y) => (float)Math.Sin(Math.Sqrt(x * x + y * y)); // Очень похоже на живот 
+        //Func<float, float, float> myFunction = (x, y) => (float)Math.Cos(3 * Math.Sqrt(x * x + y * y)); // Роза 
+/*
+        Func<float, float, float> myFunction = (x, y) => // Функция Вейерштрасса
+        {
+            float sum = 0.0f;
+            int maxIterations = 100;
+
+            for (int n = 0; n < maxIterations; n++)
+            {
+                float term = (float)Math.Pow(0.5, n) * (float)Math.Cos(Math.Pow(3.0, n) * Math.PI * x) * (float)Math.Cos(Math.Pow(3.0, n) * Math.PI * y);
+                sum += term;
+            }
+
+            return sum;
+        };
+
+*/
+        PrimitiveShape graphicModel = PrimitiveShape.ModelGraphic(myFunction, x0, x1, y0, y1, xSteps, ySteps);
+        shapes.Add(graphicModel);
+        //var graphicModel1 = Converter.DotObjToPrimitiveShape(File.ReadAllText("./graphic.obj")).ToObject3D();
+        //objects.Add(graphicModel1);
 
     }
 

@@ -108,6 +108,58 @@ namespace Lab6_9
             throw new NotImplementedException();
         }
 
+        public static List<Vector3> BuildSurfaceSegment(Func<float, float, float> function, float x0, float x1, float y0, float y1, int xSteps, int ySteps)
+        {
+            List<Vector3> surfacePoints = new List<Vector3>();
+
+            float xStepSize = (x1 - x0) / xSteps;
+            float yStepSize = (y1 - y0) / ySteps;
+
+            for (int i = 0; i <= xSteps; i++)
+            {
+                for (int j = 0; j <= ySteps; j++)
+                {
+                    float x = x0 + i * xStepSize;
+                    float y = y0 + j * yStepSize;
+                    float z = function(x, y);
+
+                    surfacePoints.Add(new Vector3(x, y, z));
+                }
+            }
+
+            return surfacePoints;
+        }
+
+        public static int[][] BuildSurfaceIndices(int xSteps, int ySteps)
+        {
+            int[][] indices = new int[xSteps * ySteps][];
+
+            for (int i = 0; i < xSteps; i++)
+            {
+                for (int j = 0; j < ySteps; j++)
+                {
+                    int currentIndex = i * (ySteps + 1) + j;
+
+                    // Соединение вершин для квадрата
+                    indices[i * ySteps + j] = new int[]
+                    {
+                currentIndex, currentIndex + 1, currentIndex + ySteps + 2,
+                currentIndex, currentIndex + ySteps + 2, currentIndex + ySteps + 1
+                    };
+                }
+            }
+
+            return indices;
+        }
+
+        public static PrimitiveShape ModelGraphic(Func<float, float, float> function, float x0, float x1, float y0, float y1, int xSteps, int ySteps)
+        {
+            List<Vector3> surfacePoints = BuildSurfaceSegment(function, x0, x1, y0, y1, xSteps, ySteps);   
+            int[][] surfaceIndices = BuildSurfaceIndices(xSteps, ySteps);
+
+            return new PrimitiveShape { vertices = surfacePoints.ToArray(), polygons = surfaceIndices };
+        }
+
         public Vector3[] Vertices
         {
             get => vertices;
