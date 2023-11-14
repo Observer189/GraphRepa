@@ -103,8 +103,8 @@ public class Scene
         //Func<float, float, float> myFunction = (x, y) => x * x + y * y;
         //Func<float, float, float> myFunction = (x, y) => x * x - y * y;
         //Func<float, float, float> myFunction = (x, y) => (float)(Math.Sin(x) + Math.Cos(y)); // Ландшафтная функция
-        Func<float, float, float> myFunction = (x, y) => (float)Math.Sin(Math.Sqrt(x * x + y * y)); // Очень похоже на живот 
-        //Func<float, float, float> myFunction = (x, y) => (float)Math.Cos(3 * Math.Sqrt(x * x + y * y)); // Роза 
+        //Func<float, float, float> myFunction = (x, y) => (float)Math.Sin(Math.Sqrt(x * x + y * y)); // Очень похоже на живот 
+        Func<float, float, float> myFunction = (x, y) => (float)Math.Cos(3 * Math.Sqrt(x * x + y * y)); // Роза 
 /*
         Func<float, float, float> myFunction = (x, y) => // Функция Вейерштрасса
         {
@@ -122,7 +122,7 @@ public class Scene
 
 */
         PrimitiveShape graphicModel = PrimitiveShape.ModelGraphic(myFunction, x0, x1, y0, y1, xSteps, ySteps);
-        shapes.Add(graphicModel);
+        //shapes.Add(graphicModel);
         //var graphicModel1 = Converter.DotObjToPrimitiveShape(File.ReadAllText("./graphic.obj")).ToObject3D();
         //objects.Add(graphicModel1);
 
