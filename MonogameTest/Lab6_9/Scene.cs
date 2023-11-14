@@ -7,55 +7,30 @@ namespace Lab6_9;
 
 public class Scene
 {
-    List<Object3D> objects = new List<Object3D>() {  };
-    List<PrimitiveShape> shapes = new List<PrimitiveShape>() { };
-    CurrentCamera currentCamera = CurrentCamera.Axonometric;
-    public (float phi, float psi) AxonometricProjectionAngles = (float.Pi / 4, float.Pi / 4);
+    
+    public List<Object3D> Objects { get; set; } = new List<Object3D>() {  };
+    public List<PrimitiveShape> Shapes { get; set; } = new List<PrimitiveShape>() { };
+    public CurrentCamera CurrentCamera { get; set; } = CurrentCamera.Axonometric;
+    public Camera SelectedCamera { get 
+        {
+            if (!CameraLock)
+                return cameras[(int)CurrentCamera];
+            else
+                return fixedCamera;
+        }
+    }
+    Camera[] cameras = new Camera[] { Camera.GetOrtogonal(), Camera.GetPerspective() };
+    //public (float phi, float psi) AxonometricProjectionAngles = (float.Pi / 4, float.Pi / 4);
     //Индекс текущего объекта, -1 если никакой объект не выбран
-    int objectsIndex = -1;
-    int shapesIndex = -1;
-    private bool cameraLock = false;
-    private float cameraScale;
-    private Vector2 center;
- 
-    public bool CameraLock
-    {
-        get => cameraLock;
-        set => cameraLock = value;
-    }
+    public int ObjectsIndex { get; set; } = -1;
+    public int ShapesIndex { get; set; } = -1;
+    private Camera fixedCamera = Camera.GetOrtogonal();
+    public bool CameraLock { get; set; } = false;
+    //private float CameraScale { get; set; }
+    public Vector2 Center { get; set; }
 
-    public CurrentCamera CurrentCamera
-    {
-        get => currentCamera;
-        set => currentCamera = value;
-    }
 
-    public List<Object3D> Objects => objects;
-    public List<PrimitiveShape> Shapes => shapes;
 
-    public int ObjectsIndex
-    {
-        get => objectsIndex;
-        set => objectsIndex = value;
-    }
-
-    public int ShapesIndex
-    {
-        get => shapesIndex;
-        set => shapesIndex = value;
-    }
-
-    public float CameraScale
-    {
-        get => cameraScale;
-        set => cameraScale = value;
-    }
-
-    public Vector2 Center
-    {
-        get => center;
-        set => center = value;
-    }
 
     public void Init()
     {
@@ -103,8 +78,8 @@ public class Scene
         //Func<float, float, float> myFunction = (x, y) => x * x + y * y;
         //Func<float, float, float> myFunction = (x, y) => x * x - y * y;
         //Func<float, float, float> myFunction = (x, y) => (float)(Math.Sin(x) + Math.Cos(y)); // Ландшафтная функция
-        //Func<float, float, float> myFunction = (x, y) => (float)Math.Sin(Math.Sqrt(x * x + y * y)); // Очень похоже на живот 
-        Func<float, float, float> myFunction = (x, y) => (float)Math.Cos(3 * Math.Sqrt(x * x + y * y)); // Роза 
+        Func<float, float, float> myFunction = (x, y) => (float)Math.Sin(Math.Sqrt(x * x + y * y)); // Очень похоже на живот 
+        //Func<float, float, float> myFunction = (x, y) => (float)Math.Cos(3 * Math.Sqrt(x * x + y * y)); // Роза 
 /*
         Func<float, float, float> myFunction = (x, y) => // Функция Вейерштрасса
         {
@@ -122,7 +97,7 @@ public class Scene
 
 */
         PrimitiveShape graphicModel = PrimitiveShape.ModelGraphic(myFunction, x0, x1, y0, y1, xSteps, ySteps);
-        //shapes.Add(graphicModel);
+        Shapes.Add(graphicModel);
         //var graphicModel1 = Converter.DotObjToPrimitiveShape(File.ReadAllText("./graphic.obj")).ToObject3D();
         //objects.Add(graphicModel1);
 

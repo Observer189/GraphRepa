@@ -533,16 +533,16 @@ public class RotationFigureTool:Tool
         toolPanel.AddChild(dropdown);
         toolPanel.AddChild(new VerticalSpace(10));
 
-        cameraAxonometricProjLast = scene.AxonometricProjectionAngles;
-        cameraModeLast = scene.CurrentCamera;
-        scene.AxonometricProjectionAngles = (0, 0);
+        //cameraAxonometricProjLast = scene.AxonometricProjectionAngles;
+        //cameraModeLast = scene.CurrentCamera;
+        //scene.AxonometricProjectionAngles = (0, 0);
         scene.CameraLock = true;
     }
 
     public override void Deselect(Scene scene)
     {
-        scene.AxonometricProjectionAngles = cameraAxonometricProjLast;
-        scene.CurrentCamera = cameraModeLast;
+        //scene.AxonometricProjectionAngles = cameraAxonometricProjLast;
+        //scene.CurrentCamera = cameraModeLast;
         scene.CameraLock = false;
         points.Clear();
     }
@@ -588,7 +588,7 @@ public class RotationFigureTool:Tool
                     "Z" => 2,
                     _ => throw new NotImplementedException()
                 };
-                var shape = MakeRotationFigure(points, axis,its,scene.Center,scene.CameraScale);
+                var shape = MakeRotationFigure(points, axis,its,scene.Center,scene.SelectedCamera.Scale);
                 list.Add(shape);
             }
         }
@@ -612,7 +612,7 @@ public class RotationFigureTool:Tool
                     "Z" => 2,
                     _ => throw new NotImplementedException()
                 };
-                var shape = MakeRotationFigure(points, axis,its,scene.Center,scene.CameraScale);
+                var shape = MakeRotationFigure(points, axis,its,scene.Center,scene.SelectedCamera.Scale);
                 scene.Shapes.Add(shape);
             }
         }

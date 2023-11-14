@@ -142,7 +142,8 @@ namespace Lab6_9
             }
             return wf;
         }
-        List<(Vector2 begin, Vector2 end)> ProjectWireFrameWithMatrix(Matrix projectionMatrix, Object3D shape)
+
+        static List<(Vector2 begin, Vector2 end)> ProjectWireFrameWithMatrix(Matrix projectionMatrix, Object3D shape)
         {
             var wf = new List<(Vector2 begin, Vector2 end)>();
             var vertixes = shape.Vertices;
@@ -174,32 +175,7 @@ namespace Lab6_9
         //(float phi, float psi) AxonometricProjectionAngles = (0, 0);
         //(float phi, float psi) AxonometricProjectionAngles = (float.Pi / 4, 0);
 
-        static Matrix GetAxonometric(float phi, float psi)
-        {
-            var cospsi = MathF.Cos(psi);
-            var cosphi = MathF.Cos(phi);
-            var sinpsi = MathF.Sin(psi);
-            var sinphi = MathF.Sin(phi);
-            var matrix = new Matrix()
-            {
-                M11 = cospsi, M12 = sinphi * sinpsi,
-                M21 = 0, M22 = cosphi,
-                M31 = sinpsi, M32 = -sinphi * cospsi,
-                M44 = 1,
-            };
-            return matrix;
-        }
-        static Matrix GetPerspective(float scale)
-        {
-            var matrix = new Matrix()
-            {
-                M11 = 1, 
-                M22 = 1, 
-                M33 = 0, M34 = -1/scale,
-                M44 = 1,
-            };
-            return matrix;
-        }
+        
         InputHandler inputHandler = null;
         protected override void Update(GameTime gameTime)
         {
@@ -212,24 +188,54 @@ namespace Lab6_9
             {
                 if (inputHandler.IsDown(Keys.W))
                 {
-                    scene.AxonometricProjectionAngles.phi -= 0.1f;
+                    scene.SelectedCamera.RotateX(-0.1f);
                 }
-
                 if (inputHandler.IsDown(Keys.S))
                 {
-                    scene.AxonometricProjectionAngles.phi += 0.1f;
+                    scene.SelectedCamera.RotateX(0.1f);
                 }
-
                 if (inputHandler.IsDown(Keys.D))
                 {
-                    scene.AxonometricProjectionAngles.psi += 0.1f;
-                }
+                    scene.SelectedCamera.RotateY(0.1f);
 
+                }
                 if (inputHandler.IsDown(Keys.A))
                 {
-                    scene.AxonometricProjectionAngles.psi -= 0.1f;
-                }
+                    scene.SelectedCamera.RotateY(-0.1f);
 
+                }
+                if (inputHandler.IsDown(Keys.Q))
+                {
+                    scene.SelectedCamera.RotateZ(0.1f);
+                }
+                if (inputHandler.IsDown(Keys.E))
+                {
+                    scene.SelectedCamera.RotateZ(-0.1f);
+                }
+                if (inputHandler.IsDown(Keys.Up))
+                {
+                    scene.SelectedCamera.MoveForward(0.1f);
+                }
+                if (inputHandler.IsDown(Keys.Down))
+                {
+                    scene.SelectedCamera.MoveForward(-0.1f);
+                }
+                if (inputHandler.IsDown(Keys.Left))
+                {
+                    scene.SelectedCamera.MoveLeft(0.1f);
+                }
+                if (inputHandler.IsDown(Keys.Right))
+                {
+                    scene.SelectedCamera.MoveLeft(-0.1f);
+                }
+                if (inputHandler.IsDown(Keys.RightShift))
+                {
+                    scene.SelectedCamera.MoveDown(-0.1f);
+                }
+                if (inputHandler.IsDown(Keys.RightControl))
+                {
+                    scene.SelectedCamera.MoveDown(0.1f);
+                }
                 if (inputHandler.IsPressed(Keys.C))
                 {
                     scene.CurrentCamera = scene.CurrentCamera switch
@@ -276,33 +282,21 @@ namespace Lab6_9
                 _ => throw new NotImplementedException()
 
             };*/
-            scene.CameraScale = scene.CurrentCamera switch {
-
-                CurrentCamera.Axonometric => 50f,
-                CurrentCamera.Perspective => 400f,
-                _ => throw new NotImplementedException()
-
-            };
-            var camera = scene.CurrentCamera switch
-            {
-                CurrentCamera.Axonometric => GetAxonometric(scene.AxonometricProjectionAngles.phi, scene.AxonometricProjectionAngles.psi),
-                CurrentCamera.Perspective => Matrix.CreateRotationZ(-scene.AxonometricProjectionAngles.psi) * Matrix.CreateRotationX(-scene.AxonometricProjectionAngles.phi) * Matrix.CreateTranslation(0, 0, -20) * GetPerspective(1.3f),
-                _ => throw new NotImplementedException()
-
-            };
             //var camera = GetAxonometric(AxonometricProjectionAngles.phi, AxonometricProjectionAngles.psi);
             //var camera = Matrix.CreateRotationZ(-AxonometricProjectionAngles.psi) * Matrix.CreateRotationX(-AxonometricProjectionAngles.phi) * Matrix.CreateTranslation(0, 0, -5) * GetPerspective(1.3f);
             //TODO: Добавить перспективную матричную камеру
-            
+
+            var currCamera = scene.SelectedCamera;
+            var camera = currCamera.GetTransformationMatrix() * currCamera.ProjectionMatrix;
             for (int i = 0; i < scene.Shapes.Count; i++)
             {
                 var t = ProjectWireFrameWithMatrix(camera, scene.Shapes[i]);
                 if (i == scene.ShapesIndex) {
-                    DrawWireFrame(buffer, t, scene.CameraScale, scene.Center, Color.Green);
+                    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Green);
                 }
                 else
                 {
-                    DrawWireFrame(buffer, t, scene.CameraScale, scene.Center, Color.Black);
+                    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Black);
                 }
             }
             for (int i = 0; i < scene.Objects.Count; i++)
@@ -310,11 +304,11 @@ namespace Lab6_9
                 var t = ProjectWireFrameWithMatrix(camera, scene.Objects[i]);
                 if (i == scene.ObjectsIndex)
                 {
-                    DrawWireFrame(buffer, t, scene.CameraScale, scene.Center, Color.Green);
+                    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Green);
                 }
                 else
                 {
-                    DrawWireFrame(buffer, t, scene.CameraScale, scene.Center, Color.Black);
+                    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Black);
 
                 }
             }
@@ -325,13 +319,13 @@ namespace Lab6_9
                 foreach (var shape in prevList)
                 {
                     var tt = ProjectWireFrameWithMatrix(camera,shape);
-                    DrawWireFrame(buffer, tt,scene.CameraScale, scene.Center, Color.Blue);
+                    DrawWireFrame(buffer, tt, currCamera.Scale, scene.Center, Color.Blue);
                 }
             }
 
             
             //Линия координат
-            DrawWireFrame(buffer, ProjectWireFrameWithMatrix(camera, OXYZLines), scene.CameraScale,scene.Center, Color.Blue);
+            DrawWireFrame(buffer, ProjectWireFrameWithMatrix(camera, OXYZLines), currCamera.Scale, scene.Center, Color.Blue);
             
             
             var textureBuffer = new Color[ScreenHeight * ScreenWidth];
@@ -346,7 +340,7 @@ namespace Lab6_9
             screenTexture.SetData(textureBuffer);
             GraphicsDevice.Clear(Color.White);
 
-            currentTool?.Draw(_spriteBatch,buffer,scene.CameraScale,scene.Center);
+            currentTool?.Draw(_spriteBatch,buffer, currCamera.Scale, scene.Center);
             _spriteBatch.Begin();
             _spriteBatch.Draw(screenTexture, new Vector2(0), Color.White);
             _spriteBatch.End();
