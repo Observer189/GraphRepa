@@ -136,9 +136,6 @@
   <ItemGroup>
     <None Include="$(ProjectDir)*.frag" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(ProjectDir)*.vert" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="gradient.frag" />
-    <None Include="gradient.vert" />
-    <None Include="uniform.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
