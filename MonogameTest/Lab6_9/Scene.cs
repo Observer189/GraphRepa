@@ -53,15 +53,16 @@ public class Scene
 
         // Икосаэдр
      //   var IcosahedronShape = PrimitiveShape.Icosahedron();
-        var teapot = Converter.DotObjToPrimitiveShape(File.ReadAllText("./teapot.obj")).ToObject3D();
-        teapot.GenerateRandomColors();
-        teapot.GenerateNormals();
-        Objects.Add(teapot);
+        //var teapot = Converter.DotObjToPrimitiveShape(File.ReadAllText("./teapot.obj")).ToObject3D();
+        //teapot.GenerateRandomColors();
+        //teapot.GenerateNormals();
+        //Objects.Add(teapot);
 
-        //var skull = Converter.DotObjToPrimitiveShape(File.ReadAllText("./Skull.obj")).ToObject3D();
-        //skull.TransformationMatrix = Matrix.CreateScale(0.5f);
-        //skull.GenerateRandomColors();
-        //Objects.Add(skull);
+        var skull = Converter.DotObjToPrimitiveShape(File.ReadAllText("./Skull.obj")).ToObject3D();
+        skull.TransformationMatrix = Matrix.CreateScale(0.5f);
+        skull.GenerateNormals();
+        skull.GenerateRandomColors();
+        Objects.Add(skull);
 
 
         //shapes.Add(IcosahedronShape);

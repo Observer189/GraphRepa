@@ -17,6 +17,7 @@ using System.IO;
 using MonoGame.Extended.Collections;
 using MonoGame.Extended;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Diagnostics;
 
 namespace Lab6_9
 {
@@ -286,7 +287,8 @@ namespace Lab6_9
             //var camera = GetAxonometric(AxonometricProjectionAngles.phi, AxonometricProjectionAngles.psi);
             //var camera = Matrix.CreateRotationZ(-AxonometricProjectionAngles.psi) * Matrix.CreateRotationX(-AxonometricProjectionAngles.phi) * Matrix.CreateTranslation(0, 0, -5) * GetPerspective(1.3f);
             //TODO: Добавить перспективную матричную камеру
-
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             var currCamera = scene.SelectedCamera;
             //var camera = currCamera.GetTransformationMatrix() * currCamera.ProjectionMatrix;
             for (int i = 0; i < scene.Shapes.Count; i++)
@@ -349,7 +351,7 @@ namespace Lab6_9
             //Renderer.drawTriangle(buffer, new Vector3(0, 0, 0), new Vector3(1f, 0.01f, 0), new Vector3(2, 0, 0), 50f, new Vector2(200, 300), Color.Black);
 
             //Renderer.drawTriangle(buffer, new Vector3(0, 0, 0), new Vector3(1f, 1, 0), new Vector3(0, 4, 0), 50f, new Vector2(300, 200), Color.Black);
-
+            stopwatch.Stop();
             var textureBuffer = new Color[ScreenHeight * ScreenWidth];
             for (int y = 0; y < buffer.GetLength(0); y++)
             {
@@ -365,7 +367,8 @@ namespace Lab6_9
             currentTool?.Draw(_spriteBatch,buffer, currCamera.Scale, scene.Center);
             _spriteBatch.Begin();
             _spriteBatch.Draw(screenTexture, new Vector2(0), Color.White);
-            _spriteBatch.DrawString(font, $"Camera coordinates: {currCamera.CameraCoordinate}\n" +
+            _spriteBatch.DrawString(font, $"Time to render: {stopwatch.ElapsedMilliseconds} ms\n" +
+                $"Camera coordinates: {currCamera.CameraCoordinate}\n" +
                 $"Looking vector is {Vector4.Transform(new Vector4(0, 0, 1, 1), currCamera.RotationMatrix)}", new Vector2(0, 0), Color.Black);
             _spriteBatch.End();
 
