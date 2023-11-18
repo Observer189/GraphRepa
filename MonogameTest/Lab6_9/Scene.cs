@@ -35,13 +35,13 @@ public class Scene
     public void Init()
     {
         //Добавлять объекты и их сдвигать можно тут
-        var cubeObj = Object3D.Cube();
-        cubeObj.TransformationMatrix *= Matrix.CreateTranslation(3, 0, 0);
-        //objects.Add(cubeObj);
+        //var cubeObj = Object3D.Cube();
+        //cubeObj.TransformationMatrix *= Matrix.CreateTranslation(3, 0, 0);
+        //Objects.Add(cubeObj);
 
         // Куб
         //var cubeShape = PrimitiveShape.Cube();
-        //shapes.Add(cubeShape);
+        //Shapes.Add(cubeShape);
 
         // Тетраэдр
         //var tetrahedronShape = PrimitiveShape.Tetrahedron();
@@ -53,12 +53,15 @@ public class Scene
 
         // Икосаэдр
      //   var IcosahedronShape = PrimitiveShape.Icosahedron();
-     //   var teapot = Converter.DotObjToPrimitiveShape(File.ReadAllText("./teapot.obj")).ToObject3D();
-        //objects.Add(teapot);
+        var teapot = Converter.DotObjToPrimitiveShape(File.ReadAllText("./teapot.obj")).ToObject3D();
+        teapot.GenerateRandomColors();
+        teapot.GenerateNormals();
+        Objects.Add(teapot);
 
         //var skull = Converter.DotObjToPrimitiveShape(File.ReadAllText("./Skull.obj")).ToObject3D();
         //skull.TransformationMatrix = Matrix.CreateScale(0.5f);
-        //objects.Add(skull);
+        //skull.GenerateRandomColors();
+        //Objects.Add(skull);
 
 
         //shapes.Add(IcosahedronShape);
@@ -96,8 +99,8 @@ public class Scene
         };
 
 */
-        PrimitiveShape graphicModel = PrimitiveShape.ModelGraphic(myFunction, x0, x1, y0, y1, xSteps, ySteps);
-        Shapes.Add(graphicModel);
+        //PrimitiveShape graphicModel = PrimitiveShape.ModelGraphic(myFunction, x0, x1, y0, y1, xSteps, ySteps);
+        //Objects.Add(graphicModel.ToObject3D());
         //var graphicModel1 = Converter.DotObjToPrimitiveShape(File.ReadAllText("./graphic.obj")).ToObject3D();
         //objects.Add(graphicModel1);
 

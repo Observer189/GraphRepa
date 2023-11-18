@@ -273,8 +273,9 @@ namespace Lab6_9
         protected override void Draw(GameTime gameTime)
         {
             //Первая координата - Y, вторая - X. Так быстрее.
-            var buffer = new Color[ScreenHeight, ScreenWidth];
-            scene.Center = new Vector2(ScreenWidth / 2, ScreenHeight / 2);
+            //var buffer = new Color[ScreenHeight, ScreenWidth];
+            //scene.Center = new Vector2(ScreenWidth / 2, ScreenHeight / 2);
+            var buffer = Renderer.NewCanvas(ScreenWidth, ScreenHeight);
             /*float scale = scene.CurrentCamera switch {
 
                 CurrentCamera.Axonometric => 50f,
@@ -287,53 +288,74 @@ namespace Lab6_9
             //TODO: Добавить перспективную матричную камеру
 
             var currCamera = scene.SelectedCamera;
-            var camera = currCamera.GetTransformationMatrix() * currCamera.ProjectionMatrix;
+            //var camera = currCamera.GetTransformationMatrix() * currCamera.ProjectionMatrix;
             for (int i = 0; i < scene.Shapes.Count; i++)
             {
-                var t = ProjectWireFrameWithMatrix(camera, scene.Shapes[i]);
-                if (i == scene.ShapesIndex) {
-                    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Green);
-                }
-                else
-                {
-                    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Black);
-                }
+                //var t = ProjectWireFrameWithMatrix(camera, scene.Shapes[i]);
+                //if (i == scene.ShapesIndex) {
+                //    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Green);
+                //}
+                //else
+                //{
+                //    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Black);
+                //}
+                var color = i == scene.ShapesIndex ? Color.Green : Color.Black;
+                Renderer.DrawOnCanvas(buffer, currCamera, scene.Shapes[i], color);
+
             }
             for (int i = 0; i < scene.Objects.Count; i++)
             {
-                var t = ProjectWireFrameWithMatrix(camera, scene.Objects[i]);
-                if (i == scene.ObjectsIndex)
-                {
-                    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Green);
-                }
-                else
-                {
-                    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Black);
+                //var t = ProjectWireFrameWithMatrix(camera, scene.Objects[i]);
+                //if (i == scene.ObjectsIndex)
+                //{
+                //    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Green);
+                //}
+                //else
+                //{
+                //    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Black);
+                //}
+                var color = i == scene.ObjectsIndex ? Color.Green : Color.Black;
+                Renderer.DrawOnCanvas(buffer, currCamera, scene.Objects[i], color);
 
-                }
             }
-            
+
             if (currentTool != null)
             {
                 var prevList = currentTool.GetPreview(scene);
                 foreach (var shape in prevList)
                 {
-                    var tt = ProjectWireFrameWithMatrix(camera,shape);
-                    DrawWireFrame(buffer, tt, currCamera.Scale, scene.Center, Color.Blue);
+                    switch (shape)
+                    {
+                        case Object3D obj:
+                            Renderer.DrawOnCanvas(buffer, currCamera, obj, Color.Blue);
+                            break;
+                        case PrimitiveShape ps:
+                            Renderer.DrawOnCanvas(buffer, currCamera, ps, Color.Blue);
+                            break;
+                        default:
+                            break;
+                    }
+                    //var tt = ProjectWireFrameWithMatrix(camera,shape);
+                    //DrawWireFrame(buffer, tt, currCamera.Scale, scene.Center, Color.Blue);
                 }
             }
 
             
             //Линия координат
-            DrawWireFrame(buffer, ProjectWireFrameWithMatrix(camera, OXYZLines), currCamera.Scale, scene.Center, Color.Blue);
-            
-            
+            //DrawWireFrame(buffer, ProjectWireFrameWithMatrix(camera, OXYZLines), currCamera.Scale, scene.Center, Color.Blue);
+            //Renderer.DrawOnCanvas(buffer, currCamera, OXYZLines, Color.Blue);
+
+            //Renderer.drawTriangle(buffer, new Vector3(0, 0, 0), new Vector3(1f, 1, 0), new Vector3(2, 0, 0), 50f, new Vector2(200, 200), Color.Black);
+            //Renderer.drawTriangle(buffer, new Vector3(0, 0, 0), new Vector3(1f, 0.01f, 0), new Vector3(2, 0, 0), 50f, new Vector2(200, 300), Color.Black);
+
+            //Renderer.drawTriangle(buffer, new Vector3(0, 0, 0), new Vector3(1f, 1, 0), new Vector3(0, 4, 0), 50f, new Vector2(300, 200), Color.Black);
+
             var textureBuffer = new Color[ScreenHeight * ScreenWidth];
             for (int y = 0; y < buffer.GetLength(0); y++)
             {
                 for (int x = 0; x < buffer.GetLength(1); x++)
                 {
-                    textureBuffer[buffer.GetLength(1) * y + x] = buffer[y, x];
+                    textureBuffer[buffer.GetLength(1) * y + x] = buffer[y, x].c;
                 }
 
             }
@@ -343,10 +365,12 @@ namespace Lab6_9
             currentTool?.Draw(_spriteBatch,buffer, currCamera.Scale, scene.Center);
             _spriteBatch.Begin();
             _spriteBatch.Draw(screenTexture, new Vector2(0), Color.White);
+            _spriteBatch.DrawString(font, $"Camera coordinates: {currCamera.CameraCoordinate}\n" +
+                $"Looking vector is {Vector4.Transform(new Vector4(0, 0, 1, 1), currCamera.RotationMatrix)}", new Vector2(0, 0), Color.Black);
             _spriteBatch.End();
 
             uiSystem.Draw(gameTime, this._spriteBatch);
-
+            
             base.Draw(gameTime);
         }
 

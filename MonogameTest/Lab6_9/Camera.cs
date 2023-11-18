@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using MonoGame.Extended;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,12 +46,13 @@ namespace Lab6_9
         public Vector4 CameraCoordinate { get; private set; } = new Vector4(0, 0, 0, 0);
         public Matrix GetTransformationMatrix()
         {
-            return Matrix.CreateTranslation(new Vector3(CameraCoordinate.X, CameraCoordinate.Y, CameraCoordinate.Z)) * RotationMatrix;
+            return Matrix.CreateTranslation(new Vector3(-CameraCoordinate.X, -CameraCoordinate.Y, -CameraCoordinate.Z)) * RotationMatrix;
         }
         public float Scale = 1.0f;
         public void RotateX(float angle)
         {
             RotationMatrix *= Matrix.CreateRotationX(angle);
+
         }
         public void RotateY(float angle)
         {
@@ -63,32 +65,30 @@ namespace Lab6_9
         public void MoveForward(float step)
         {
             var c = new Vector4(0, 0, step, 1);
-            var t = Vector4.Transform(c, RotationMatrix);
-            t.X = -t.X;
-            t.Y = -t.Y;
-            CameraCoordinate += t / t.W;
+            var t = Vector4.Transform(c, Matrix.Invert(this.RotationMatrix));
+
+            CameraCoordinate += t ;
         }
         public void MoveDown(float step)
         {
             var c = new Vector4(0, step, 0, 1);
-            var t = Vector4.Transform(c, RotationMatrix);
-            t.X = -t.X;
-            t.Z = -t.Z;
-            CameraCoordinate += t / t.W;
+            var t = Vector4.Transform(c, Matrix.Invert(this.RotationMatrix));
+
+            CameraCoordinate += t;
         }
         public void MoveLeft(float step)
         {
             var c = new Vector4(step, 0, 0, 1);
-            var t = Vector4.Transform(c, RotationMatrix);
-            t.Y = -t.Y;
-            t.Z = -t.Z;
-            CameraCoordinate += t / t.W;
+            var t = Vector4.Transform(c, Matrix.Invert(this.RotationMatrix));
+
+            CameraCoordinate += t;
         }
         static public Camera GetOrtogonal()
         {
             Camera cam = new Camera();
+            cam.CameraCoordinate = new Vector4(0, 0, -10, 0);
             cam.ProjectionMatrix = GetAxonometric(0, 0);
-            cam.Scale = 50.0f;
+            cam.Scale = 100.0f;
 
             return cam;
         }
@@ -97,7 +97,7 @@ namespace Lab6_9
             Camera cam = new Camera();
             cam.CameraCoordinate = new Vector4(0, 0, -10, 0);
             cam.ProjectionMatrix = GetPerspective(1.3f);
-            cam.Scale = 400.0f;
+            cam.Scale = 800.0f;
             return cam;
         }
     }

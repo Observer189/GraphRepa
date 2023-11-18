@@ -14,7 +14,7 @@ namespace Lab6_9
     {
         /// <summary>
         /// Координаты вершин в локальных к объекту вершинах
-        /// Y вверх, X враво, Z на нас
+        /// Y вверх, X враво, Z от нас
         /// </summary>
         private Vector3[] vertices;
         public int[][] polygons;

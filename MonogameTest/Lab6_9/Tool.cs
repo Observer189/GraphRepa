@@ -89,7 +89,7 @@ public class Tool
         return true;
     }
 
-    public virtual void Draw(SpriteBatch batch, Color[,] buffer, float scale, Vector2 center)
+    public virtual void Draw(SpriteBatch batch, (Color c, float depth)[,] buffer, float scale, Vector2 center)
     {
         
     }
@@ -555,7 +555,7 @@ public class RotationFigureTool:Tool
         }
     }
 
-    public override void Draw(SpriteBatch batch, Color[,] buffer, float scale, Vector2 center)
+    public override void Draw(SpriteBatch batch, (Color c, float depth)[,] buffer, float scale, Vector2 center)
     {
         batch.Begin();
         if (points.Count == 1)
