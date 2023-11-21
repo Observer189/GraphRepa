@@ -299,7 +299,7 @@ namespace Lab6_9
                 }
             }
         }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void DrawLineScaleless((Color c, float depth)[,] canvas, Vertice begin, Vertice end,  Color color, Color lightColor, Color[,] tex)
         {
             //(var x1, var y1) = (line.begin * scale + offset).ToPoint();
