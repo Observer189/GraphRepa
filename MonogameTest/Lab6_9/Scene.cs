@@ -11,7 +11,7 @@ public class Scene
     public List<Object3D> Objects { get; set; } = new List<Object3D>() {  };
     public List<PrimitiveShape> Shapes { get; set; } = new List<PrimitiveShape>() { };
     public LightSource LightSource { get; set; } = LightSource.GetWhite(Vector3.Zero);
-    public CurrentCamera CurrentCamera { get; set; } = CurrentCamera.Axonometric;
+    public CurrentCamera CurrentCamera { get; set; } = CurrentCamera.Perspective;
     public Camera SelectedCamera { get 
         {
             if (!CameraLock)
