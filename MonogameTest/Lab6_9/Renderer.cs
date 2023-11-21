@@ -19,6 +19,12 @@ namespace Lab6_9
         public float Brightness;
         public float textureCoordinateX;
         public float textureCoordinateY;
+
+        public override string ToString()
+        {
+            return $"{{Z:{Z}, Brightness: {Brightness}, Tex: [{textureCoordinateX}, {textureCoordinateY}] }}";
+        }
+
         public static VerticeData operator + (VerticeData lhs, VerticeData rhs) 
         {
             return new VerticeData
@@ -49,6 +55,7 @@ namespace Lab6_9
                 textureCoordinateY = lhs.textureCoordinateY * rhs,
             };
         }
+
     }
     public static class Renderer
     {
@@ -68,15 +75,15 @@ namespace Lab6_9
                 }
             }
         }
-        public static void DrawOnCanvas((Color c, float depth)[,] canvas, Camera camera, in Object3D obj, Color framecolor)
+        public static void DrawOnCanvas((Color c, float depth)[,] canvas, Camera camera, LightSource ls, in Object3D obj, Color framecolor)
         {
             //var l = ProjectWireFrameWithCameraMatrixAndProjectionMatrix(camera.GetTransformationMatrix(), camera.ProjectionMatrix, obj);
             var v = Vector3.Transform(new Vector3(0, 0, 1), Matrix.Invert(camera.RotationMatrix));
-            Draw3DObj(canvas, camera.GetTransformationMatrix(), camera.ProjectionMatrix, v, obj, camera.Scale, new Vector2 { X = canvas.GetLength(1) / 2.0f, Y = canvas.GetLength(0) / 2.0f }, Color.Gray);
+            Draw3DObj(canvas, camera.GetTransformationMatrix(), camera.ProjectionMatrix, ls, v, obj, camera.Scale, new Vector2 { X = canvas.GetLength(1) / 2.0f, Y = canvas.GetLength(0) / 2.0f }, Color.Gray);
             //DrawWireFrame(canvas, l, camera.Scale, new Vector2 { X = canvas.GetLength(1) / 2.0f, Y = canvas.GetLength(0) / 2.0f }, framecolor);
 
         }
-        public static void DrawOnCanvas((Color c, float depth)[,] canvas, Camera camera, in PrimitiveShape prim, Color framecolor)
+        public static void DrawOnCanvas((Color c, float depth)[,] canvas, Camera camera, LightSource ls, in PrimitiveShape prim, Color framecolor)
         {
             var l = ProjectWireFrameWithCameraMatrixAndProjectionMatrix(camera.GetTransformationMatrix(), camera.ProjectionMatrix, prim);
             DrawWireFrame(canvas, l, camera.Scale, new Vector2 { X = canvas.GetLength(1) / 2.0f, Y = canvas.GetLength(0) / 2.0f }, framecolor);
@@ -88,7 +95,7 @@ namespace Lab6_9
             var wf = new List<(Vector3 begin, Vector3 end)>();
             var vertices = shape.Vertices;
             var resMatrix = shape.TransformationMatrix * cameraMatrix;
-            foreach (var polygon in shape.polygons)
+            foreach (var polygon in shape.faces)
             {
                 for (int i = 0; i < polygon.Length; i++)
                 {
@@ -118,7 +125,7 @@ namespace Lab6_9
             var wf = new List<(Vector3 begin, Vector3 end)>();
             var vertixes = shape.Vertices;
             var resMatrix = shape.TransformationMatrix * cameraMatrix;
-            foreach (var polygon in shape.triangles)
+            foreach (var polygon in shape.faces)
             {
 
                 var v1 = new Vector4(vertixes[polygon.v1], 1);
@@ -145,15 +152,17 @@ namespace Lab6_9
             }
             return wf;
         }
-        static void Draw3DObj((Color c, float depth)[,] canvas, in Matrix cameraMatrix, in Matrix projectionMatrix, Vector3 vectorOfLooking, in Object3D shape, float scale, Vector2 offset, Color c)
+        static void Draw3DObj((Color c, float depth)[,] canvas, in Matrix cameraMatrix, in Matrix projectionMatrix, LightSource ls, Vector3 vectorOfLooking, in Object3D shape, float scale, Vector2 offset, Color c)
         {
             var wf = new List<(Vector3 begin, Vector3 end)>();
             var vertixes = shape.Vertices;
             var resMatrix = shape.TransformationMatrix * cameraMatrix;
             var normals = shape.facesNormals;
-            for (int i = 0; i < shape.triangles.Length; i++)
+            var lightingPos = ls.Position;
+            var texCoords = shape.texCoord;
+            for (int i = 0; i < shape.faces.Length; i++)
             {
-
+                var tex = shape.facesTexs?[i] ?? (0, 0, 0);
                 //Вычисляем вектор нормали
                 var normal = normals?[i] ?? Vector3.Zero;
                 //var n = new Vector4(normal, 1);
@@ -172,7 +181,7 @@ namespace Lab6_9
                     continue;
                 }
                 //
-                var polygon = shape.triangles[i];
+                var polygon = shape.faces[i];
                 var v1 = new Vector4(vertixes[polygon.v1], 1);
                 var v2 = new Vector4(vertixes[polygon.v2], 1);
                 var v3 = new Vector4(vertixes[polygon.v3], 1);
@@ -189,12 +198,31 @@ namespace Lab6_9
                 var v3v2 = new Vector3 { X = v3TrPj.X / v3TrPj.W, Y = -v3TrPj.Y / v3TrPj.W, Z = v3Tr.Z / v3Tr.W };
 
                 if (v1v2.Z < 0 && v2v2.Z < 0 && v3v2.Z < 0) { continue; }
-                
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                float Brightness(Vector4 vertexPos, Vector3 lighting, Vector3 normal)
+                {
+
+                    var v = new Vector3(vertexPos.X, vertexPos.Y, vertexPos.Z) / vertexPos.W;
+                    var t = lighting - v;
+                    var l = t.Length() * normal.Length();
+                    if (MathF.Abs(l) < 0.00001) l = 1.0f; 
+                    return (Vector3.Dot(t, normal) / l );
+                }
+                var q = shape.facesVertNormals[i];
+                var t1 = texCoords?[tex.tx1] ?? Vector2.Zero;
+                var t2 = texCoords?[tex.tx2] ?? Vector2.Zero;
+                var t3 = texCoords?[tex.tx3] ?? Vector2.Zero;
+
                 drawTriangle(canvas, 
-                    new Vertice(v1v2.ToVector2(), new VerticeData() { Z = v1v2.Z }),
-                    new Vertice(v2v2.ToVector2(), new VerticeData() { Z = v2v2.Z }),
-                    new Vertice(v3v2.ToVector2(), new VerticeData() { Z = v3v2.Z }), 
-                    scale, offset, shape.colors?[i] ?? c);
+                    new Vertice(v1v2.ToVector2(), new VerticeData() { Z = v1v2.Z, 
+                        Brightness = Brightness(v1, lightingPos, shape.vertNormals[q.n1]), textureCoordinateX = t1.X, textureCoordinateY = t1.Y }),
+                    new Vertice(v2v2.ToVector2(), new VerticeData() { Z = v2v2.Z, 
+                        Brightness = Brightness(v2, lightingPos, shape.vertNormals[q.n2]), textureCoordinateX = t2.X, textureCoordinateY = t2.Y }),
+                    new Vertice(v3v2.ToVector2(), new VerticeData() { Z = v3v2.Z, 
+                        Brightness = Brightness(v3, lightingPos, shape.vertNormals[q.n3]), textureCoordinateX = t3.X, textureCoordinateY = t3.Y }), 
+                    scale, offset, shape.colors?[i] ?? c,
+                    ls.Color, shape.texture
+                    );
 
             }
 
@@ -248,7 +276,7 @@ namespace Lab6_9
             var totalLen = MathF.Sqrt(MathF.Pow(x1 - x2, 2) + MathF.Pow(y1 - y2, 2));
             while (true)
             {
-                var portion = Portion(stX1, stY1, totalLen, x1, x2);
+                var portion = Portion(stX1, stY1, totalLen, x1, y1);
                 var zRes = z1 * (1 - portion) + z2 * portion;
                 if (x1 >= 0 && x1 < bufferlimX && y1 >= 0 && y1 < bufferlimY && canvas[y1, x1].depth > zRes && zRes > 0)
                     canvas[y1, x1] = (color, zRes);
@@ -271,7 +299,8 @@ namespace Lab6_9
                 }
             }
         }
-        static void DrawLineScaleless((Color c, float depth)[,] canvas, Vertice begin, Vertice end,  Color color)
+
+        static void DrawLineScaleless((Color c, float depth)[,] canvas, Vertice begin, Vertice end,  Color color, Color lightColor, Color[,] tex)
         {
             //(var x1, var y1) = (line.begin * scale + offset).ToPoint();
             //(var x2, var y2) = (line.end * scale + offset).ToPoint();
@@ -296,7 +325,9 @@ namespace Lab6_9
             int sx = (x1 < x2) ? 1 : -1;
             int sy = (y1 < y2) ? 1 : -1;
             int err = dx - dy;
-            
+
+            var texX = tex.GetLength(0);
+            var texY = tex.GetLength(1);
 
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -304,14 +335,28 @@ namespace Lab6_9
             {
                 return Math.Clamp(MathF.Sqrt((float)((x1 - xP) * (x1 - xP) + (y1 - yP) * (y1 - yP))) / totalLen, 0.0f, 1.0f);
             }
-
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            Color InterpolateColor(float brightness, Vector3 PointColor, Vector3 lighting)
+            {
+                return new Color((brightness + 1.2f) * (brightness - 1.0f) / (-1.2f) * PointColor + (brightness + 1.2f) * brightness / (2.0f * 1.2f) * lighting); 
+                //if (brightness < 0.0f) { return Color.Black; }
+                //else return lighting;
+            }
             var totalLen = MathF.Sqrt(MathF.Pow(x1 - x2, 2) + MathF.Pow(y1 - y2, 2));
+            var lightingColorVec = lightColor.ToVector3();
             while (true)
             {
-                var portion = Portion(stX1, stY1, totalLen, x1, x2);
+                var portion = Portion(stX1, stY1, totalLen, x1, y1);
                 var zRes = begin.d * (1 - portion) + end.d * portion;
+                // 
                 if (x1 >= 0 && x1 < bufferlimX && y1 >= 0 && y1 < bufferlimY && zRes.Z > 0 && canvas[y1, x1].depth > zRes.Z)
-                    canvas[y1, x1] = (color, zRes.Z);
+                {
+                    var tx = (int)Math.Clamp(zRes.textureCoordinateX * texX, 0, texX - 1);
+                    var ty = (int)Math.Clamp(texY - zRes.textureCoordinateY * texY, 0, texY - 1);
+
+                    var resCol = color.ToVector3() * tex[tx, ty].ToVector3();
+                    canvas[y1, x1] = (InterpolateColor(zRes.Brightness, resCol, lightingColorVec), zRes.Z);
+                }
                 //Console.WriteLine($"{x1}, {y1}");
                 if (x1 == x2 && y1 == y2)
                 {
@@ -331,10 +376,16 @@ namespace Lab6_9
                 }
             }
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static float ReplaceNaN(float num, float repl)
+        {
+            if (float.IsNaN(num)) { return repl; }
+            else { return num; }
+        }
         static void fillBottomFlatTriangle((Color c, float depth)[,] canvas,
             Vertice v1,
             Vertice v2,
-            Vertice v3, Color c)
+            Vertice v3, Color c, Color lightColor, Color[,] tex)
         {
  
             float invslope1 = (v2.v.X - v1.v.X) / (v2.v.Y - v1.v.Y);
@@ -345,19 +396,20 @@ namespace Lab6_9
 
             for (int scanlineY = (int)v1.v.Y; scanlineY <= v2.v.Y; scanlineY++)
             {
-                var zleft = (v1.d + (v2.d - v1.d) * Math.Clamp( (scanlineY - v1.v.Y) / (v2.v.Y - v1.v.Y), 0f, 1f));
-                var zRight = (v1.d + (v3.d - v1.d) * Math.Clamp((scanlineY - v1.v.Y) / (v3.v.Y - v1.v.Y), 0f, 1f));
+                var zleft = (v1.d + (v2.d - v1.d) * ReplaceNaN( (scanlineY - v1.v.Y) / (v2.v.Y - v1.v.Y), 1f));
+                var zRight = (v1.d + (v3.d - v1.d) * ReplaceNaN((scanlineY - v1.v.Y) / (v3.v.Y - v1.v.Y), 1f));
 
                 DrawLineScaleless(canvas, 
                     new Vertice(new Vector2((int)curx1, scanlineY), zleft), 
-                    new Vertice(new Vector2((int)curx2, scanlineY), zRight), c);
+                    new Vertice(new Vector2((int)curx2, scanlineY), zRight), 
+                    c, lightColor, tex);
                 curx1 += invslope1;
                 curx2 += invslope2;
             }
         }
         static void fillTopFlatTriangle((Color c, float depth)[,] canvas, Vertice v1,
             Vertice v2,
-            Vertice v3, Color c)
+            Vertice v3, Color c, Color lightColor, Color[,] tex)
         {
             float invslope1 = (v3.v.X - v1.v.X) / (v3.v.Y - v1.v.Y);
             float invslope2 = (v3.v.X - v2.v.X) / (v3.v.Y - v2.v.Y);
@@ -367,17 +419,18 @@ namespace Lab6_9
 
             for (int scanlineY = (int)(v3.v.Y); scanlineY > v1.v.Y; scanlineY--)
             {
-                var zleft = (v1.d + (v3.d - v1.d) * Math.Clamp((scanlineY - v1.v.Y) / (v3.v.Y - v1.v.Y), 0f, 1f));
-                var zRight = (v2.d + (v3.d - v2.d) * Math.Clamp((scanlineY - v2.v.Y) / (v3.v.Y - v2.v.Y), 0f, 1f));
+                var zleft = (v1.d + (v3.d - v1.d) * ReplaceNaN((scanlineY - v1.v.Y) / (v3.v.Y - v1.v.Y), 1f));
+                var zRight = (v2.d + (v3.d - v2.d) * ReplaceNaN((scanlineY - v2.v.Y) / (v3.v.Y - v2.v.Y), 1f));
 
                 DrawLineScaleless(canvas,
                     new Vertice(new Vector2((int)curx1, scanlineY), zleft),
-                    new Vertice(new Vector2((int)curx2, scanlineY), zRight), c);
+                    new Vertice(new Vector2((int)curx2, scanlineY), zRight), 
+                    c, lightColor, tex);
                 curx1 -= invslope1;
                 curx2 -= invslope2;
             }
         }
-        static public void drawTriangle((Color c, float depth)[,] canvas, Vertice v1_, Vertice v2_, Vertice v3_, float scale, Vector2 offset, Color c)
+        static public void drawTriangle((Color c, float depth)[,] canvas, Vertice v1_, Vertice v2_, Vertice v3_, float scale, Vector2 offset, Color c, Color lightColor, Color[,] tex)
         {
             /* at first sort the three vertices by y-coordinate ascending so v1 is the topmost vertice */
             Vertice[] t = new[] { 
@@ -391,12 +444,12 @@ namespace Lab6_9
             if (Math.Abs(v1.v.Y - v3.v.Y) > canvas.GetLength(0)) return;
             if ((int)v2.v.Y == (int)v3.v.Y)
             {
-                fillBottomFlatTriangle(canvas, v1, v2, v3, c);
+                fillBottomFlatTriangle(canvas, v1, v2, v3, c, lightColor, tex);
             }
             /* check for trivial case of top-flat triangle */
             else if ((int)v1.v.Y == (int)v2.v.Y)
             {
-                fillTopFlatTriangle(canvas, v1, v2, v3, c);
+                fillTopFlatTriangle(canvas, v1, v2, v3, c, lightColor, tex);
             }
             else
             {
@@ -405,10 +458,10 @@ namespace Lab6_9
                   (v1.v.X + ((float)(v2.v.Y - v1.v.Y) / (float)(v3.v.Y - v1.v.Y)) * (v3.v.X - v1.v.X)), 
                   v2.v.Y);
                 var vd4 = (v1.d + (v3.d - v1.d) * ((float)(v2.v.Y - v1.v.Y) / (float)(v3.v.Y - v1.v.Y)));
-                fillBottomFlatTriangle(canvas, v1, v2, new Vertice(v4, vd4), c);
+                fillBottomFlatTriangle(canvas, v1, v2, new Vertice(v4, vd4), c, lightColor, tex);
 
                 //fillBottomFlatTriangle(g, vt1, vt2, v4);
-                fillTopFlatTriangle(canvas, v2, new Vertice(v4, vd4), v3, c);
+                fillTopFlatTriangle(canvas, v2, new Vertice(v4, vd4), v3, c, lightColor, tex);
 
                 //fillTopFlatTriangle(g, vt2, v4, vt3);
             }

@@ -339,7 +339,7 @@ public class RotateAroundTool:Tool
                 var v2 = new Vector3(x + dX, y + dY, z + dZ);
                 var line = new PrimitiveShape();
                 line.Vertices = new[] { v1, v2 };
-                line.polygons = new[] { new[] { 0, 1 } };
+                line.faces = new[] { new[] { 0, 1 } };
                 var center = (v1 + v2) / 2;
                 line.TransformationMatrix *= Matrix.CreateTranslation(-center);
                 line.TransformationMatrix *= Matrix.CreateScale(1000);
@@ -629,7 +629,7 @@ public class RotationFigureTool:Tool
         };
         PrimitiveShape rotationShape = new PrimitiveShape();
         rotationShape.Vertices = new Vector3[points.Count * iterations];
-        rotationShape.polygons = new int[iterations * (points.Count-1)][];
+        rotationShape.faces = new int[iterations * (points.Count-1)][];
         
         for (int i = 0; i < points.Count; i++)
         {
@@ -643,21 +643,21 @@ public class RotationFigureTool:Tool
             for (int j = 1; j < points.Count; j++)
             {
                 rotationShape.Vertices[points.Count * i + j] = Vector3.Transform(rotationShape.Vertices[points.Count * (i-1) + j], rotationMatrix);
-                rotationShape.polygons[polygonIndex] = new[] {points.Count * (i-1) + (j-1), points.Count * i + (j-1), points.Count * i + j, points.Count * (i-1) + j };
+                rotationShape.faces[polygonIndex] = new[] {points.Count * (i-1) + (j-1), points.Count * i + (j-1), points.Count * i + j, points.Count * (i-1) + j };
                 ++polygonIndex;
             }
         }
 
         for (int i = 1; i < points.Count; i++)
         {
-            rotationShape.polygons[polygonIndex] = new[]
+            rotationShape.faces[polygonIndex] = new[]
                 { (iterations - 1) * points.Count + (i - 1), (i - 1), i, (iterations - 1) * points.Count + i };
             ++polygonIndex;
         }
         
         
         Console.WriteLine($"pol index = {polygonIndex}");
-        Console.WriteLine($"pol size = {rotationShape.polygons.Length}");
+        Console.WriteLine($"pol size = {rotationShape.faces.Length}");
         return rotationShape;
     }
 }

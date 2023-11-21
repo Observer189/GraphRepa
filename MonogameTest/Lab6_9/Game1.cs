@@ -126,7 +126,7 @@ namespace Lab6_9
             var wf = new List<(Vector2 begin, Vector2 end)>();
             var vertices = shape.Vertices;
             var resMatrix = shape.TransformationMatrix * projectionMatrix;
-            foreach (var polygon in shape.polygons)
+            foreach (var polygon in shape.faces)
             {
                 for (int i = 0; i < polygon.Length; i++)
                 {
@@ -149,7 +149,7 @@ namespace Lab6_9
             var wf = new List<(Vector2 begin, Vector2 end)>();
             var vertixes = shape.Vertices;
             var resMatrix = shape.TransformationMatrix * projectionMatrix;
-            foreach (var polygon in shape.triangles)
+            foreach (var polygon in shape.faces)
             {
                 
                 var v1 = new Vector4(vertixes[polygon.v1], 1);
@@ -189,29 +189,29 @@ namespace Lab6_9
             {
                 if (inputHandler.IsDown(Keys.W))
                 {
-                    scene.SelectedCamera.RotateX(-0.1f);
+                    scene.SelectedCamera.RotateX(-0.03f);
                 }
                 if (inputHandler.IsDown(Keys.S))
                 {
-                    scene.SelectedCamera.RotateX(0.1f);
+                    scene.SelectedCamera.RotateX(0.03f);
                 }
                 if (inputHandler.IsDown(Keys.D))
                 {
-                    scene.SelectedCamera.RotateY(0.1f);
+                    scene.SelectedCamera.RotateY(0.03f);
 
                 }
                 if (inputHandler.IsDown(Keys.A))
                 {
-                    scene.SelectedCamera.RotateY(-0.1f);
+                    scene.SelectedCamera.RotateY(-0.03f);
 
                 }
                 if (inputHandler.IsDown(Keys.Q))
                 {
-                    scene.SelectedCamera.RotateZ(0.1f);
+                    scene.SelectedCamera.RotateZ(0.03f);
                 }
                 if (inputHandler.IsDown(Keys.E))
                 {
-                    scene.SelectedCamera.RotateZ(-0.1f);
+                    scene.SelectedCamera.RotateZ(-0.03f);
                 }
                 if (inputHandler.IsDown(Keys.Up))
                 {
@@ -265,10 +265,15 @@ namespace Lab6_9
             }
             currentTool?.Update(inputHandler,toolsPanel.Area.Contains(inputHandler.MousePosition.ToVector2())
                                              || toolUsePanel.Area.Contains(inputHandler.MousePosition.ToVector2()));
+
+            if (inputHandler.IsPressed(Keys.R))
+                RotateLight = !RotateLight;
+            if (RotateLight)
+                scene.LightSource.Position = Vector3.Transform(scene.LightSource.Position, Matrix.CreateRotationY(0.005f));
             uiSystem.Update(gameTime);
             base.Update(gameTime);
         }
-
+        bool RotateLight = false;
 
 
         protected override void Draw(GameTime gameTime)
@@ -302,7 +307,7 @@ namespace Lab6_9
                 //    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Black);
                 //}
                 var color = i == scene.ShapesIndex ? Color.Green : Color.Black;
-                Renderer.DrawOnCanvas(buffer, currCamera, scene.Shapes[i], color);
+                Renderer.DrawOnCanvas(buffer, currCamera, scene.LightSource, scene.Shapes[i], color);
 
             }
             for (int i = 0; i < scene.Objects.Count; i++)
@@ -317,7 +322,7 @@ namespace Lab6_9
                 //    DrawWireFrame(buffer, t, currCamera.Scale, scene.Center, Color.Black);
                 //}
                 var color = i == scene.ObjectsIndex ? Color.Green : Color.Black;
-                Renderer.DrawOnCanvas(buffer, currCamera, scene.Objects[i], color);
+                Renderer.DrawOnCanvas(buffer, currCamera, scene.LightSource, scene.Objects[i], color);
 
             }
 
@@ -329,10 +334,10 @@ namespace Lab6_9
                     switch (shape)
                     {
                         case Object3D obj:
-                            Renderer.DrawOnCanvas(buffer, currCamera, obj, Color.Blue);
+                            Renderer.DrawOnCanvas(buffer, currCamera, scene.LightSource, obj, Color.Blue);
                             break;
                         case PrimitiveShape ps:
-                            Renderer.DrawOnCanvas(buffer, currCamera, ps, Color.Blue);
+                            Renderer.DrawOnCanvas(buffer, currCamera, scene.LightSource, ps, Color.Blue);
                             break;
                         default:
                             break;
@@ -362,14 +367,15 @@ namespace Lab6_9
 
             }
             screenTexture.SetData(textureBuffer);
-            GraphicsDevice.Clear(Color.White);
+            GraphicsDevice.Clear(Color.Gray);
 
             currentTool?.Draw(_spriteBatch,buffer, currCamera.Scale, scene.Center);
             _spriteBatch.Begin();
             _spriteBatch.Draw(screenTexture, new Vector2(0), Color.White);
             _spriteBatch.DrawString(font, $"Time to render: {stopwatch.ElapsedMilliseconds} ms\n" +
                 $"Camera coordinates: {currCamera.CameraCoordinate}\n" +
-                $"Looking vector is {Vector4.Transform(new Vector4(0, 0, 1, 1), currCamera.RotationMatrix)}", new Vector2(0, 0), Color.Black);
+                $"Looking vector is {Vector4.Transform(new Vector4(0, 0, 1, 1), currCamera.RotationMatrix)}\n" +
+                $"Light source position is {scene.LightSource.Position}", new Vector2(0, 0), Color.Black);
             _spriteBatch.End();
 
             uiSystem.Draw(gameTime, this._spriteBatch);

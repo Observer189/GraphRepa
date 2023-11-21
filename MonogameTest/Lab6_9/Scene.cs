@@ -10,6 +10,7 @@ public class Scene
     
     public List<Object3D> Objects { get; set; } = new List<Object3D>() {  };
     public List<PrimitiveShape> Shapes { get; set; } = new List<PrimitiveShape>() { };
+    public LightSource LightSource { get; set; } = LightSource.GetWhite(Vector3.Zero);
     public CurrentCamera CurrentCamera { get; set; } = CurrentCamera.Axonometric;
     public Camera SelectedCamera { get 
         {
@@ -34,11 +35,13 @@ public class Scene
 
     public void Init()
     {
+        this.LightSource = LightSource.GetWhite(new Vector3(10, 0, 0));
         //Добавлять объекты и их сдвигать можно тут
-        //var cubeObj = Object3D.Cube();
-        //cubeObj.TransformationMatrix *= Matrix.CreateTranslation(3, 0, 0);
+        //var cubeObj = PrimitiveShape.Cube().ToObject3D();
+        //cubeObj.GenerateTriangleVertexNormals();
+        //cubeObj.GenerateRandomColors();
         //Objects.Add(cubeObj);
-
+        
         // Куб
         //var cubeShape = PrimitiveShape.Cube();
         //Shapes.Add(cubeShape);
@@ -54,15 +57,25 @@ public class Scene
         // Икосаэдр
      //   var IcosahedronShape = PrimitiveShape.Icosahedron();
         //var teapot = Converter.DotObjToPrimitiveShape(File.ReadAllText("./teapot.obj")).ToObject3D();
-        //teapot.GenerateRandomColors();
-        //teapot.GenerateNormals();
+        //teapot.GenerateSpecificColor(new Color(255, 239, 223));
+        //teapot.GenerateTriangleVertexNormals();
         //Objects.Add(teapot);
 
-        var skull = Converter.DotObjToPrimitiveShape(File.ReadAllText("./Skull.obj")).ToObject3D();
-        skull.TransformationMatrix = Matrix.CreateScale(0.5f);
+        var skullPS = Converter.DotObjToPrimitiveShape(File.ReadAllText("./12140_Skull_v3_L2.obj"));
+        var skull = skullPS.ToObject3D();
+        skull.TransformationMatrix = Matrix.CreateScale(1f);
         skull.GenerateNormals();
+        //skull.GenerateTriangleVertexNormals();
         skull.GenerateRandomColors();
+        skull.GenerateSpecificColor(Color.White);
+        skull.texture = Converter.LoadTextureByPath("./Skull.jpg");
         Objects.Add(skull);
+        //var cube = Converter.DotObjToPrimitiveShape(File.ReadAllText("./cube.obj")).ToObject3D();
+        //cube.GenerateNormals();
+        //cube.texture = Converter.LoadTextureByPath("./cube.png");
+        //cube.GenerateSpecificColor(Color.White);
+
+        //Objects.Add(cube);
 
 
         //shapes.Add(IcosahedronShape);

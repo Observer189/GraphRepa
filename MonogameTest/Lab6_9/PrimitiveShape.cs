@@ -16,8 +16,18 @@ namespace Lab6_9
         /// Координаты вершин в локальных к объекту вершинах
         /// Y вверх, X враво, Z от нас
         /// </summary>
-        private Vector3[] vertices;
-        public int[][] polygons;
+        private Vector3[] vertCoord;
+        public int[][] faces;
+        public Vector3[] vertNormals;
+        public int[][]? facesVertNormals;
+
+        public Vector3[]? facesNormals;
+        public Vector2[]? texCoord;
+        public Color[,] texture = new[,] { { Color.White } };
+        //Освещение
+
+        //Текстурирование
+        public int[][]? facesTexs;
         /// <summary>
         /// Матрица, выполняющая сдвиги относительно центра мира.
         /// </summary>
@@ -32,20 +42,20 @@ namespace Lab6_9
         {
             var v = new Vector3[] { new(-1, -1, -1), new(1, -1, -1), new(1, -1, 1), new(-1, -1, 1), new(-1, 1, -1), new(1, 1, -1), new(1, 1, 1), new(-1, 1, 1), };
             int[][] tr = new [] { new[] { 0, 1, 2, 3 }, new[] { 0, 1, 5, 4 } , new[] { 1, 2, 6, 5 } , new[] { 2, 3, 7, 6 }, new[] { 0, 3, 7, 4 } , new[] {4, 5, 6, 7 } };
-            return new PrimitiveShape() { vertices = v, polygons = tr };
+            return new PrimitiveShape() { vertCoord = v, faces = tr };
         }
         public static PrimitiveShape OXYZLines(float scale = 1)
         {
             var v = new Vector3[] { new(0, 0, 0), new(1, 0, 0), new(0, 1, 0), new(0, 0, 1)};
             int[][] tr = new[] { new[] { 0, 1}, new[] {0, 2 }, new[] { 0, 3 } };
-            return new PrimitiveShape() { vertices = v, polygons = tr, transformationMatrix = Matrix.Identity * Matrix.CreateScale(scale) };
+            return new PrimitiveShape() { vertCoord = v, faces = tr, transformationMatrix = Matrix.Identity * Matrix.CreateScale(scale) };
         }
 
         public static PrimitiveShape Tetrahedron()
         {
              var v = new Vector3[] { new(0, 2, 0), new(1, 0, -1 / 1), new(-1, 0, -1 / 1), new(0, 0, 1) };
              int[][] tr = new [] { new [] { 0, 1, 2 },  new [] { 0, 1, 3 }, new [] { 0, 2, 3 }, new [] { 1, 2, 3 }  };
-             return new PrimitiveShape() { vertices = v, polygons = tr };
+             return new PrimitiveShape() { vertCoord = v, faces = tr };
         }
 
         public static PrimitiveShape Octahedron()
@@ -54,7 +64,7 @@ namespace Lab6_9
             int[][] tr = new [] {new [] { 0, 1, 3 }, new [] { 0, 2, 3 }, new [] { 0, 1, 4 }, new [] { 0, 2, 4 }, new [] { 5, 1, 3 }, 
                           new [] { 5, 2, 3 }, new [] { 5, 1, 4 },  new [] { 5, 2, 4 } };
 
-            return new PrimitiveShape() { vertices = v, polygons = tr };
+            return new PrimitiveShape() { vertCoord = v, faces = tr };
         }
 
         public static PrimitiveShape Icosahedron()
@@ -100,7 +110,7 @@ namespace Lab6_9
         new [] { 9, 8, 1 }      //  19
             };
 
-            return new PrimitiveShape() { vertices = v, polygons = tr };
+            return new PrimitiveShape() { vertCoord = v, faces = tr };
         }
 
         public static PrimitiveShape Dodecahedron()
@@ -156,13 +166,13 @@ namespace Lab6_9
             List<Vector3> surfacePoints = BuildSurfaceSegment(function, x0, x1, y0, y1, xSteps, ySteps);   
             int[][] surfaceIndices = BuildSurfaceIndices(xSteps, ySteps);
 
-            return new PrimitiveShape { vertices = surfacePoints.ToArray(), polygons = surfaceIndices };
+            return new PrimitiveShape { vertCoord = surfacePoints.ToArray(), faces = surfaceIndices };
         }
 
         public Vector3[] Vertices
         {
-            get => vertices;
-            set => vertices = value;
+            get => vertCoord;
+            set => vertCoord = value;
         }
 
         public Matrix TransformationMatrix
@@ -174,32 +184,57 @@ namespace Lab6_9
         public Object3D ToObject3D()
         {
             var triangles = new List<(int, int, int)>();
-            foreach (var poly in polygons)
+            var trianglesVertNormals = this.facesVertNormals is not null? new List<(int, int, int)>() : null;
+            var trianglesTexs = this.facesTexs is not null ? new List<(int, int, int)>() : null;
+            for (int i = 0; i < faces.Length; i++)
             {
-
+                var poly = faces[i];
+                var norms = facesVertNormals?[i];
+                var texs = facesTexs?[i];
                 switch (poly.Length)
                 {
                     case 0:
                         break;
                     case 1:
                         triangles.Add((poly[0], poly[0], poly[0]));
+                        if (norms is not null)
+                            trianglesVertNormals?.Add((norms[0], norms[0], norms[0]));
+                        if (texs is not null)
+                            trianglesTexs?.Add((texs[0], texs[0], texs[0]));
                         break;
                     case 2:
-                        triangles.Add((poly[0], poly[1], poly[0]));
+                        triangles.Add((poly[0], poly[0], poly[1]));
+                        if (norms is not null)
+                            trianglesVertNormals?.Add((norms[0], norms[0], norms[1]));
+                        if (texs is not null)
+                            trianglesTexs?.Add((texs[0], texs[0], texs[1]));
                         break;
                     case 3:
                         triangles.Add((poly[0], poly[1], poly[2]));
+                        if (norms is not null)
+                            trianglesVertNormals?.Add((norms[0], norms[1], norms[2]));
+                        if (texs is not null)
+                            trianglesTexs?.Add((texs[0], texs[1], texs[2]));
                         break;
                     case 4:
                         triangles.Add((poly[0], poly[1], poly[3]));
+                        if (norms is not null)
+                            trianglesVertNormals?.Add((norms[0], norms[1], norms[3]));
+                        if (texs is not null)
+                            trianglesTexs?.Add((texs[0], texs[1], texs[3]));
                         triangles.Add((poly[1], poly[2], poly[3]));
+                        if (norms is not null)
+                            trianglesVertNormals?.Add((norms[1], norms[2], norms[3]));
+                        if (texs is not null)
+                            trianglesTexs?.Add((texs[1], texs[2], texs[3]));
                         break;
                     default:
                         Console.Error.WriteLine($"Polygons with length of {poly.Length} not supported");
                         break;
                 }
             }
-            return new Object3D() { TransformationMatrix = TransformationMatrix, Vertices = vertices, triangles = triangles.ToArray() };
+            return new Object3D() { TransformationMatrix = TransformationMatrix, 
+                Vertices = Vertices, faces = triangles.ToArray(), vertNormals = vertNormals, texCoord = texCoord, texture = texture, facesNormals = facesNormals, facesTexs = trianglesTexs?.ToArray(), facesVertNormals = trianglesVertNormals?.ToArray()   };
         }
     }
 }
