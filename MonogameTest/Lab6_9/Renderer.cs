@@ -215,11 +215,11 @@ namespace Lab6_9
 
                 drawTriangle(canvas, 
                     new Vertice(v1v2.ToVector2(), new VerticeData() { Z = v1v2.Z, 
-                        Brightness = Brightness(v1, lightingPos, shape.vertNormals[q.n1]), textureCoordinateX = t1.X, textureCoordinateY = t1.Y }),
+                        Brightness = Brightness(Vector4.Transform(v1, shape.TransformationMatrix), lightingPos, shape.vertNormals[q.n1]), textureCoordinateX = t1.X, textureCoordinateY = t1.Y }),
                     new Vertice(v2v2.ToVector2(), new VerticeData() { Z = v2v2.Z, 
-                        Brightness = Brightness(v2, lightingPos, shape.vertNormals[q.n2]), textureCoordinateX = t2.X, textureCoordinateY = t2.Y }),
+                        Brightness = Brightness(Vector4.Transform(v1, shape.TransformationMatrix), lightingPos, shape.vertNormals[q.n2]), textureCoordinateX = t2.X, textureCoordinateY = t2.Y }),
                     new Vertice(v3v2.ToVector2(), new VerticeData() { Z = v3v2.Z, 
-                        Brightness = Brightness(v3, lightingPos, shape.vertNormals[q.n3]), textureCoordinateX = t3.X, textureCoordinateY = t3.Y }), 
+                        Brightness = Brightness(Vector4.Transform(v1, shape.TransformationMatrix), lightingPos, shape.vertNormals[q.n3]), textureCoordinateX = t3.X, textureCoordinateY = t3.Y }), 
                     scale, offset, shape.colors?[i] ?? c,
                     ls.Color, shape.texture
                     );
