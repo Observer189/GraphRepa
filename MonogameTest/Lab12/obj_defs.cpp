@@ -23,3 +23,8 @@ void shaderLog(GLuint shader)
 		std::cout << "InfoLog: " << infoLog.data() << std::endl;
 	}
 }
+std::string stringFromFile(const char* path) {
+	std::ifstream ifs(path);
+	const std::string vsh((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+	return vsh;
+}

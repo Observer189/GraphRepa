@@ -6,15 +6,16 @@
 #include <GL/glew.h>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+//#include <glm/glm.hpp>
+//#include <glm/gtc/matrix_transform.hpp>
+//#include <glm/gtc/type_ptr.hpp>
 #include <lodepng.h>
 #include <random>
 #include <stdexcept>
 
 void checkOpenGLerror();
 void shaderLog(GLuint shader);
+std::string stringFromFile(const char* path);
 
 struct Vertex {
 	//Пространственные координаты
@@ -51,9 +52,12 @@ public:
 	}
 	VertexShader(std::string& vertex_shader) {
 		auto v = vertex_shader.c_str();
+		//std::cout << v << '\n';
 		GLuint vShader = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(vShader, 1, &v, 0);
 		glCompileShader(vShader);
+		shaderLog(vShader);
+		id = vShader;
 		checkOpenGLerror();
 	}
 	VertexShader() {}
@@ -83,6 +87,9 @@ public:
 		GLuint fShader = glCreateShader(GL_FRAGMENT_SHADER);
 		glShaderSource(fShader, 1, &v, 0);
 		glCompileShader(fShader);
+		shaderLog(fShader);
+
+		id = fShader;
 		checkOpenGLerror();
 	}
 	FragmentShader() {}
@@ -117,18 +124,27 @@ public:
 		vert_s = vs;
 		frag_s = fs;
 		id = glCreateProgram();
-		glAttachShader(id, vs.get()->Id());
-		glAttachShader(id, fs.get()->Id());
+		auto vs_id = vs.get()->Id();
+		auto fs_id = fs.get()->Id();
+		glAttachShader(id, vs_id);
+		glAttachShader(id, fs_id);
 		glLinkProgram(id);
 		// Проверяем статус сборки
 		int link_ok;
 		glGetProgramiv(id, GL_LINK_STATUS, &link_ok);
 		if (!link_ok) {
+			checkOpenGLerror();
 			std::cout << "error attach shaders \n";
 			throw std::invalid_argument("Program not linked properly!");
 		}
 	}
 	ProgramShader(){}
+	void Bind() const {
+		glUseProgram(id);
+	}
+	static void Unbind() {
+		glUseProgram(0);
+	}
 	~ProgramShader()
 	{
 		glDeleteProgram(id);
@@ -251,6 +267,7 @@ public:
 		return id;
 	}
 	Texture2D() {
+		id = 0;
 		glGenTextures(1, &id);
 	}
 	//Отвязывает текущую текстуру
@@ -271,7 +288,10 @@ public:
 		}
 		
 		Bind();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+		checkOpenGLerror();
 		Unbind();
 	}
 	~Texture2D()

@@ -21,10 +21,35 @@
     <ClCompile Include="obj_defs.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="subtask2.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="subtask3.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="obj_defs.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="subtask2.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="subtask3.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(ProjectDir)shaders\*.frag" />
+    <None Include="$(ProjectDir)shaders\*.frag" />
+    <None Include="$(ProjectDir)shaders\*.frag" />
+    <None Include="$(ProjectDir)shaders\*.vert" />
+    <None Include="$(ProjectDir)shaders\*.vert" />
+    <None Include="shaders\subtask2.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="textures\subtask2.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
   </ItemGroup>
 </Project>
