@@ -130,13 +130,17 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="obj_defs.cpp" />
+    <ClCompile Include="subtask1.cpp" />
     <ClCompile Include="subtask2.cpp" />
     <ClCompile Include="subtask3.cpp" />
+    <ClCompile Include="subtask4.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="obj_defs.h" />
+    <ClInclude Include="subtask1.h" />
     <ClInclude Include="subtask2.h" />
     <ClInclude Include="subtask3.h" />
+    <ClInclude Include="subtask4.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(ProjectDir)*.frag" CopyToOutputDirectory="PreserveNewest" />
@@ -144,11 +148,6 @@
     <None Include="$(ProjectDir)shaders\*.frag" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(ProjectDir)shaders\*.vert" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(ProjectDir)textures\*.png" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="shaders\subtask2.frag" />
-    <None Include="shaders\subtask2.vert" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="textures\subtask2.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

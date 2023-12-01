@@ -42,7 +42,6 @@ void subtast2(sf::Window& window) {
 	auto prog = ProgramShader(vs, fs);
 	auto tex = Texture2D();
 	tex.LoadFromPNG("./textures/subtask2.png");
-	tex.Unbind();
 	
 	auto vbo = VBO();
 	auto vao = VAO();

@@ -10,8 +10,10 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <random>
 #include "obj_defs.h"
+#include "subtask1.h"
 #include "subtask2.h"
 #include "subtask3.h"
+#include "subtask4.h"
 
 
 
@@ -23,9 +25,9 @@ int main() {
 	window.setActive(true);
 	glewInit();
 	glEnable(GL_DEPTH_TEST);
-	//subtast1(window);
+	//subtask1(window);
 	//subtast2(window);
-	subtast3(window);
-	//subtast4(window);
+	//subtast3(window);
+	subtask4(window);
 
 }

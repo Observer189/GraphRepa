@@ -39,17 +39,4 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="$(ProjectDir)shaders\*.frag" />
-    <None Include="$(ProjectDir)shaders\*.frag" />
-    <None Include="$(ProjectDir)shaders\*.frag" />
-    <None Include="$(ProjectDir)shaders\*.vert" />
-    <None Include="$(ProjectDir)shaders\*.vert" />
-    <None Include="shaders\subtask2.vert" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="textures\subtask2.png">
-      <Filter>Файлы ресурсов</Filter>
-    </Image>
-  </ItemGroup>
 </Project>
