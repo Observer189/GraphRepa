@@ -11,7 +11,7 @@ Installers/Linux/tmp_run/
 #Visual Studio files
 *.pidb
 *.userprefs
-*.[Oo]bj
+#*.[Oo]bj
 *.exe
 *.pdb
 *.user
