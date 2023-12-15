@@ -6,9 +6,9 @@
 #include <GL/glew.h>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
-//#include <glm/glm.hpp>
-//#include <glm/gtc/matrix_transform.hpp>
-//#include <glm/gtc/type_ptr.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <lodepng.h>
 #include <random>
 #include <stdexcept>
@@ -307,7 +307,7 @@ public:
 
 class Object3D {
 public:
-	std::vector<Vertex> verteces = std::vector<Vertex>();
+	std::vector<Vertex> vertices = std::vector<Vertex>();
 	std::vector<GLuint> indices = std::vector<GLuint>();
 public:
 	Object3D(std::string& inputfile) {
@@ -351,8 +351,8 @@ public:
 						}
 						tinyobj::real_t tx = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
 						tinyobj::real_t ty = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
-						verteces.push_back(Vertex{vx, vy, vz, tx, ty});
-						auto index = (GLuint)(verteces.size() - 1);
+						vertices.push_back(Vertex{vx, vy, vz, tx, ty});
+						auto index = (GLuint)(vertices.size() - 1);
 						map[index_tuple] = index;
 						indices.push_back(index);
 					}
@@ -364,11 +364,55 @@ public:
 			}
 		}
 		std::cout << "Loaded: " << indices.size() << " index vertices\n";
-		std::cout << "Loaded: " << verteces.size() << " unique vertices\n";
+		std::cout << "Loaded: " << vertices.size() << " unique vertices\n";
 		//for (auto& i : indices) {
-		//	auto v = verteces[i];
+		//	auto v = vertices[i];
 		//	std::cout << "Index: " << i << ": " << v.x << " " << v.y << " " << v.z << " " << v.u << " " << v.v << " " <<  "\n";
 		//}
 		
 	}
+};
+
+struct ObjectTransform
+{
+	glm::vec3 position;
+	glm::vec3 rotation;
+	glm::vec3 scale;
+
+	glm::mat4 getTransformMatrix()
+	{
+		glm::mat4 transform = glm::mat4(1.0f);
+		transform = glm::translate(transform,position);
+		transform = glm::rotate(transform,glm::radians(rotation.x), glm::vec3(1.0f,0.0f,0.0f));
+		transform = glm::rotate(transform, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+		transform = glm::rotate(transform, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+		transform = glm::scale(transform,scale);
+
+		return transform;
+	}
+
+	void Rotate(glm::vec3 delta)
+	{
+		rotation += delta;
+	}
+};
+
+class GameObject
+{
+public:
+	ObjectTransform transform;
+	std::shared_ptr<Object3D> mesh;
+
+	GameObject(std::shared_ptr<Object3D> mesh) 
+	{
+		transform.position = glm::vec3(0.0f);
+		transform.rotation = glm::vec3(0.0f);
+		transform.scale = glm::vec3(1.0f);
+		this->mesh = mesh;
+	}
+
+	
+
+private:
+
 };

@@ -38,17 +38,26 @@
     <ClInclude Include="tiny_obj_loader.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\subtask1.vert" />
-    <None Include="shaders\subtask1.frag" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="textures\subtask2.png">
+    <None Include="$(ProjectDir)shaders\*.frag" />
+    <None Include="$(ProjectDir)shaders\*.vert" />
+    <None Include="$(ProjectDir)textures\*.png">
       <Filter>Файлы ресурсов</Filter>
-    </Image>
-    <Image Include="textures\subtask3.png">
+    </None>
+    <None Include="$(ProjectDir)textures\*.png">
       <Filter>Файлы ресурсов</Filter>
-    </Image>
+    </None>
+    <None Include="$(ProjectDir)objects\*.obj" />
+    <None Include="$(ProjectDir)objects\*.obj" />
+    <None Include="$(ProjectDir)objects\*.png">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="$(ProjectDir)objects\*.png">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
   </ItemGroup>
 </Project>

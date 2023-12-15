@@ -135,6 +135,7 @@
     <ClCompile Include="tiny_obj_loader.cc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="obj_defs.h" />
     <ClInclude Include="subtask1.h" />
     <ClInclude Include="tiny_obj_loader.h" />

@@ -11,6 +11,7 @@
 #include <random>
 #include "obj_defs.h"
 #include "subtask1.h"
+#include "Camera.h"
 
 
 int main() {
