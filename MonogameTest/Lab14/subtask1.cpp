@@ -37,15 +37,24 @@ void subtask1(sf::Window& window) {
 	tex.get()->LoadFromPNG("./objects/Skull.png");
 	auto skullMeshPointer = std::make_shared<Object3D>(s);
 	auto skull = GameObject(skullMeshPointer, tex, prog);*/
-	auto skull = GameObject::make_from_strings("./objects/12140_Skull_v3_L2.obj"s, "./objects/Skull.png"s, "./shaders/phong.vert"s, "./shaders/phong.frag"s);
-	skull.transform.scale = glm::vec3(0.2f);
-	skull.transform.position = glm::vec3(0, -1, 0);
-	skull.transform.Rotate(glm::vec3(-90.0f, 0.f, 0.f));
+	auto skull1 = GameObject::make_from_strings("./objects/12140_Skull_v3_L2.obj"s, "./objects/Skull.png"s, "./shaders/phong.vert"s, "./shaders/phong.frag"s);
+	auto skull2 = GameObject::make_from_strings("./objects/12140_Skull_v3_L2.obj"s, "./objects/Skull.png"s, "./shaders/toon.vert"s, "./shaders/toon.frag"s);
+	auto skull3 = GameObject::make_from_strings("./objects/12140_Skull_v3_L2.obj"s, "./objects/Skull.png"s, "./shaders/minnaert.vert"s, "./shaders/minnaert.frag"s);
+
+	skull1.transform.scale = glm::vec3(0.2f);
+	skull1.transform.position = glm::vec3(0, -1, 0);
+	skull1.transform.Rotate(glm::vec3(-90.0f, 0.f, 0.f));
+	skull2.transform.scale = glm::vec3(0.2f);
+	skull2.transform.position = glm::vec3(0, 6, 0);
+	skull2.transform.Rotate(glm::vec3(-90.0f, 0.f, 180.0f));
+	skull3.transform.scale = glm::vec3(0.2f);
+	skull3.transform.position = glm::vec3(0, -7, 0);
+	skull3.transform.Rotate(glm::vec3(-90.0f, 0.f, 90.0f));
 	GlobalLightSource gls(0.5f, glm::vec3(0.0, 1.0, 0.0));
 	PointLightSource pls(glm::vec4(5.0, 0.0, 0.0, 1.0), 3.0f);
 	ProjectorLightSource pjls(
 		glm::vec4(-7.0, 1.0, 0.0, 1.0), 10.0f, glm::normalize(glm::vec3(-1, 0, 0)), 50.0f);
-	auto scene = Scene(std::vector({ skull }), camera, gls, pls, pjls);
+	auto scene = Scene(std::vector({ skull1, skull2, skull3 }), camera, gls, pls, pjls);
 	for (auto& obj : scene.objects) {
 		obj.init();
 	}
