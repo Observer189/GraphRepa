@@ -315,7 +315,7 @@ public:
 			throw std::invalid_argument("Texture size must be power 2!");
 		// If there's an error, display it.
 		if (error != 0) {
-			//std::cout << "error " << error << ": " << lodepng_error_text(error) << std::endl;
+			std::cout << "error " << error << ": " << lodepng_error_text(error) << std::endl;
 			auto t = lodepng_error_text(error);
 			throw std::invalid_argument(t);
 		}

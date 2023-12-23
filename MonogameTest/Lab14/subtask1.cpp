@@ -37,24 +37,36 @@ void subtask1(sf::Window& window) {
 	tex.get()->LoadFromPNG("./objects/Skull.png");
 	auto skullMeshPointer = std::make_shared<Object3D>(s);
 	auto skull = GameObject(skullMeshPointer, tex, prog);*/
-	auto skull1 = GameObject::make_from_strings("./objects/12140_Skull_v3_L2.obj"s, "./objects/Skull.png"s, "./shaders/phong.vert"s, "./shaders/phong.frag"s);
-	auto skull2 = GameObject::make_from_strings("./objects/12140_Skull_v3_L2.obj"s, "./objects/Skull.png"s, "./shaders/toon.vert"s, "./shaders/toon.frag"s);
-	auto skull3 = GameObject::make_from_strings("./objects/12140_Skull_v3_L2.obj"s, "./objects/Skull.png"s, "./shaders/minnaert.vert"s, "./shaders/minnaert.frag"s);
+	auto skull1 = GameObject::make_from_strings("./objects/12140_Skull_v3_L2.obj"s, "./objects/Skull.png"s, "./shaders/minnaert.vert"s, "./shaders/minnaert.frag"s);
+	auto spacecraft = GameObject::make_from_strings("./objects/spacecraft.obj"s, "./textures/spacecraft.png"s, "./shaders/toon.vert"s, "./shaders/toon.frag"s);
+	auto barricade = GameObject::make_from_strings("./objects/barricade.obj"s, "./textures/barricade.png"s, "./shaders/phong.vert"s, "./shaders/phong.frag"s);
+	auto cottage = GameObject::make_from_strings("./objects/cottage_fixed.obj"s, "./textures/cottage_diffuse.png"s, "./shaders/phong.vert"s, "./shaders/phong.frag"s);
+	auto grass = GameObject::make_from_strings("./objects/grass.obj"s, "./textures/grass_diffuse.png"s, "./shaders/phong.vert"s, "./shaders/phong.frag"s);
+	auto tower = GameObject::make_from_strings("./objects/tower.obj"s, "./textures/tower_diffuse.png"s, "./shaders/phong.vert"s, "./shaders/phong.frag"s);
 
-	skull1.transform.scale = glm::vec3(0.2f);
-	skull1.transform.position = glm::vec3(0, -1, 0);
+	skull1.transform.scale = glm::vec3(0.02f);
+	skull1.transform.position = glm::vec3(6.5, -3, 13);
 	skull1.transform.Rotate(glm::vec3(-90.0f, 0.f, 0.f));
-	skull2.transform.scale = glm::vec3(0.2f);
-	skull2.transform.position = glm::vec3(0, 6, 0);
-	skull2.transform.Rotate(glm::vec3(-90.0f, 0.f, 180.0f));
-	skull3.transform.scale = glm::vec3(0.2f);
-	skull3.transform.position = glm::vec3(0, -7, 0);
-	skull3.transform.Rotate(glm::vec3(-90.0f, 0.f, 90.0f));
-	GlobalLightSource gls(0.5f, glm::vec3(0.0, 1.0, 0.0));
-	PointLightSource pls(glm::vec4(5.0, 0.0, 0.0, 1.0), 3.0f);
+	spacecraft.transform.scale = glm::vec3(3.0f);
+	spacecraft.transform.position = glm::vec3(14, -3, 0);
+	spacecraft.transform.Rotate(glm::vec3(0.0f, 180.f, 0.0f));
+	barricade.transform.scale = glm::vec3(0.02f);
+	barricade.transform.position = glm::vec3(6, -5.8, 12);
+	barricade.transform.Rotate(glm::vec3(-90.0f, 0.f, 90.0f));
+	cottage.transform.scale = glm::vec3(0.6f);
+	cottage.transform.position = glm::vec3(0, -5.5, 0);
+	cottage.transform.Rotate(glm::vec3(0.0f, 0.f, 0.0f));
+	grass.transform.scale = glm::vec3(0.8f);
+	grass.transform.position = glm::vec3(0, -11.5, 0);
+	grass.transform.Rotate(glm::vec3(-90.0f, 0.f, 90.0f));
+	tower.transform.scale = glm::vec3(2.0f);
+	tower.transform.position = glm::vec3(-20, -7.0f, 7);
+	tower.transform.Rotate(glm::vec3(0.0f, 180.f, 0.0f));
+	GlobalLightSource gls(0.3f, glm::vec3(1.0, 1.0, 1.0));
+	PointLightSource pls(glm::vec4(-20.0, 6.0, 7.0, 1.0), 15.0f);
 	ProjectorLightSource pjls(
-		glm::vec4(-7.0, 1.0, 0.0, 1.0), 10.0f, glm::normalize(glm::vec3(-1, 0, 0)), 50.0f);
-	auto scene = Scene(std::vector({ skull1, skull2, skull3 }), camera, gls, pls, pjls);
+		glm::vec4(14.5, 0.0, 4.5, 1.0), 5000.0f, glm::normalize(glm::vec3(0, 0.2, -1)), 150.0f);
+	auto scene = Scene(std::vector({ skull1, spacecraft, barricade, cottage, grass, tower }), camera, gls, pls, pjls);
 	for (auto& obj : scene.objects) {
 		obj.init();
 	}
