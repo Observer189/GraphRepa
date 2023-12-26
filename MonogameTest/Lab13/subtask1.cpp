@@ -135,10 +135,17 @@ void subtask1(sf::Window& window) {
 	skulls.push_back(GameObject(skullMeshPointer));
 	skulls.push_back(GameObject(skullMeshPointer));
 
+	//for (size_t i = 0; i < skulls.size(); i++)
+	//{
+	//	skulls[i].transform.scale = glm::vec3(0.01f * glm::sqrt(i+2));
+	//	skulls[i].transform.Rotate(glm::vec3(-90.0f,0.f,0.f));
+	//}
+
+	const float rotationSpeed = 20.0f; 
 	for (size_t i = 0; i < skulls.size(); i++)
 	{
-		skulls[i].transform.scale = glm::vec3(0.01f * glm::sqrt(i+2));
-		skulls[i].transform.Rotate(glm::vec3(-90.0f,0.f,0.f));
+		skulls[i].transform.scale = glm::vec3(0.01f * glm::sqrt(i + 2));
+		skulls[i].transform.Rotate(glm::vec3(-90.0f * rotationSpeed, 0.0f, 0.0f));
 	}
 
 	checkOpenGLerror();
